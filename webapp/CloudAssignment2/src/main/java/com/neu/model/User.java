@@ -7,6 +7,7 @@ import java.util.UUID;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -57,8 +58,7 @@ public class User{
     private Date modifyDate;
     
 
-	@OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "recipie_id", referencedColumnName = "id")
+    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL,mappedBy = "user")
     private Recipie recipie;
 	
     
