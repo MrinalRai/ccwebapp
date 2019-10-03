@@ -91,10 +91,6 @@ env.bak/
 venv.bak/
 bin/
 .properties
-<<<<<<< HEAD
-
-=======
->>>>>>> Assignment2
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -107,3 +103,4 @@ bin/
 
 # mypy
 .mypy_cache/
+
