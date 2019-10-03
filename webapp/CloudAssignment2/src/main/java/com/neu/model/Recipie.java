@@ -7,8 +7,10 @@ import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -25,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "recipie")
-@JsonIgnoreProperties(value = {"create_date", "modify_date","password"}, 
+@JsonIgnoreProperties(value = {"created_ts", "updated_ts"}, 
 allowGetters = true)
 public class Recipie {
 	@Id
@@ -44,8 +46,8 @@ public class Recipie {
     @Column(name = "updated_ts",nullable=false,updatable= false)
     private Date updated_ts;
     
-    @OneToOne(mappedBy = "recipie")
-    @Column(name="author_id",nullable=false,updatable= false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
     @Column(name = "cook_time_in_min",nullable=false)
@@ -72,11 +74,11 @@ public class Recipie {
     private List<String> ingredients;
     
     @OneToMany(mappedBy="recipie")
-    @Column(name= "steps",nullable=false)
+   // @Column(name= "steps",nullable=false)
     private Set<OrderedList> oList;
     
-    @OneToOne(mappedBy = "recipie")
-    @Column(name="nutrition_information",nullable=false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "nInfo_id", nullable = false)
     private NutritionInformation nInfo;
 
 	public String getId() {

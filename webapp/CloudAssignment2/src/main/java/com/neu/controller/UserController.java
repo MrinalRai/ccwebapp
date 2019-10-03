@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +31,7 @@ import com.neu.model.User;
 import com.neu.service.UserService;
 
 @RestController
-@RequestMapping(path="/v1")
+@RequestMapping(path="/v1/user")
 public class UserController {
 	
 	@Autowired
@@ -38,14 +39,12 @@ public class UserController {
 
 	private final static Logger logger = LoggerFactory.getLogger(UserController.class);
 	
-	@GetMapping(path = "/user/self", produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(path = "/self", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Object> listUser() {
 		
 		//System.out.println("-----------statsDClient.toString()--------------");
 		
 		logger.info("--Inside root mapping--");
-		logger.warn("---This is a Warn Message");
-		logger.error("This is an error message");
 		//statsDClient.incrementCounter("endpoint.login.http.get");
 		HashMap<String, Object> entities = new HashMap();
 		entities.put("Status", "Authenticated");
@@ -54,7 +53,20 @@ public class UserController {
 
 		return ResponseEntity.ok(entities);
 	}
-//	
+	
+	@GetMapping("/self")
+    public ResponseEntity<Object> getUser(Authentication authentication) {
+		User u = userService.getUserByEmail(authentication.getName());
+		HashMap<String, Object> entities = new HashMap();
+		if(null==u) {
+			entities.put("Message", "User doesn't exist");
+			return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
+		}else {
+			entities.put("User", u);
+			return new ResponseEntity<>(entities, HttpStatus.OK);
+		}
+        //return userRepository.findUserByEmailaddress(authentication.getName()).get();
+    }
 //	@GetMapping(path="/user")
 //	public @ResponseBody ResponseEntity<Iterable<User>> getAllUsers(){
 //		List<User> users;

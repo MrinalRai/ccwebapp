@@ -13,11 +13,13 @@ import org.springframework.security.core.AuthenticationException;
 
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
 
+import com.neu.exceptionHandler.Response;
+
 public class AuthenticationEntryPoint extends BasicAuthenticationEntryPoint {
 	
 	@Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authEx)
-            throws IOException {
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authEx) throws IOException {
+		
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         PrintWriter writer = response.getWriter();
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -27,7 +29,7 @@ public class AuthenticationEntryPoint extends BasicAuthenticationEntryPoint {
     }
 
     @Override
-    public void afterPropertiesSet() {
+    public void afterPropertiesSet() throws Exception{
         setRealmName("ccwebapp");
         super.afterPropertiesSet();
     }
