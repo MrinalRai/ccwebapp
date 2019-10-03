@@ -1,5 +1,6 @@
 package com.neu.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,18 +19,25 @@ public class UserService{
 	private UserRepository userRepo;
 	
 	
-	public void add(User user) {
+	public User add(User user) {
 		User u = new User();
+		List<User> userList = new ArrayList<>();
 		u.setFirstname(user.getFirstname());
 		u.setLastname(user.getLastname());
-		u.setEmail(user.getEmail());
+		for(User ul: userList) {
+			if(ul.equals(user.getEmail())) {
+				throw new UserNotFoundException("This user is already registered");
+			}else {
+				u.setEmail(user.getEmail());
+			}
+		}
 		
 		String pw = user.getPassword();
 		String salt = BCrypt.gensalt();
 		pw = BCrypt.hashpw(pw, salt);
 		u.setPassword(pw);		
 		//u.setPassword(user.getPassword());
-		userRepo.save(u);
+		return userRepo.save(u);
 	}
 		
 
@@ -71,11 +79,21 @@ public class UserService{
 	public User getUserByEmail(String email) {
 		User u = userRepo.findByEmail(email);
 		if(u.equals(null)) {
-			throw new UserNotFoundException("This email id is not registered for any user");
-			
+			throw new UserNotFoundException("This email id is not registered for any user");			
 		}
-		return userRepo.findByEmail(email);
+		return u;
 	}
 	
+//	public User loadUserByUsername(String email) {
+//		List<User> userList = new ArrayList<>();
+//		
+//		for(User ul: userList) {
+//			if(!((ul.getEmail()).equals(email))) {
+//				throw new UserNotFoundException("User not found");
+//			}else {
+//				return ul;
+//			}
+//		}
+//	}
 
 }
