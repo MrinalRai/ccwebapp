@@ -1,17 +1,23 @@
 package com.neu.model;
 
 import java.util.Date;
+import java.util.Set;
+import java.util.UUID;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -22,39 +28,69 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(value = {"create_date", "modify_date","password"}, 
        allowGetters = true)
 public class User{
+	@Id
+	@GeneratedValue(generator = "UUID")
+	@GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+	
+	private String id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    @Column(name = "firstname")
+    @Column(name = "firstname",nullable=false)
     private String firstname;
 
-    @Column(name = "lastname")
+    @Column(name = "lastname",nullable=false)
     private String lastname;
     
-    @Column(name = "email")
+    @Column(name = "email",nullable=false)
     private String email;
     
-    @Column(name = "password")
+    @Column(name = "password",nullable=false)
     private String password;
 
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "create_date")
+    @Column(name = "account_created", updatable= false)
     private Date createDate;
 
     @UpdateTimestamp
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "modify_date")
+    @Column(name = "account_updated", updatable= false)
     private Date modifyDate;
     
 
-	public Long getId() {
+	@OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "recipie_id", referencedColumnName = "id")
+    private Recipie recipie;
+	
+    
+    public Date getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(Date createDate) {
+		this.createDate = createDate;
+	}
+
+	public Date getModifyDate() {
+		return modifyDate;
+	}
+
+	public void setModifyDate(Date modifyDate) {
+		this.modifyDate = modifyDate;
+	}
+
+	public Recipie getRecipie() {
+		return recipie;
+	}
+
+	public void setRecipie(Recipie recipie) {
+		this.recipie = recipie;
+	}
+
+	public String getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

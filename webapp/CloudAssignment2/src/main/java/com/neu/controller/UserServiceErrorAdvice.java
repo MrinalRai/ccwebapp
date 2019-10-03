@@ -13,17 +13,20 @@ import com.neu.exceptionHandler.UserServiceValidationException;
 
 @ControllerAdvice
 public class UserServiceErrorAdvice {
-	
+
 	@ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler({UserNotFoundException.class})
-    public void handle(UserNotFoundException e) {}
-	
+	@ExceptionHandler({ UserNotFoundException.class })
+	public void handle(UserNotFoundException e) {
+	}
+
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ExceptionHandler({UserServiceException.class, SQLException.class, NullPointerException.class})
-    public void handle() {}
-	
-	 @ResponseStatus(HttpStatus.BAD_REQUEST)
-	 @ExceptionHandler({UserServiceValidationException.class})
-	 public void handle(UserServiceValidationException e) {}
+	@ExceptionHandler({ UserServiceException.class, SQLException.class, NullPointerException.class })
+	public void handle() {
+	}
+
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler({ UserServiceValidationException.class })
+	public void handle(UserServiceValidationException e) {
+	}
 
 }
