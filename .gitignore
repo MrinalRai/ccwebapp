@@ -101,5 +101,11 @@ bin/
 # mkdocs documentation
 /site
 
+#terraform 
+.terraform
+.tfstate
+.backup
+
 # mypy
 .mypy_cache/
+
