@@ -1,3 +1,16 @@
-Steps to create a stack using AWS Cloudformation -- Type the command sh csye6225-aws-networking-setup.sh -- You will be prompted to enter the 6 parameters as required  -- Once entered, a message explaining that network resources creation is in progress will appear -- After the stack has been successfully/unsuccessfully created, the appropriate success/error messages will be displayed.
+# CSYE 6225 - Spring 2019
 
-Steps to delete a stack using AWS Cloudformation -- Type the command sh csye6225-aws-networking-teardown.sh -- You will be prompted to enter the name of the VPC satck name that you want to delete -- Once entered, a message explaining that stack deletion is in progress will appear -- After the stack has been successfully/unsuccessfully deleted, the appropriate success/error messages will be displayed.
+## Code information and Run 
+
+Steps to run the netowrking set up script:
+
+1: sh the csye6225-aws-networking-setup.sh file to create and configure required networking resources using AWS CLI.
+Enter the VPC, Router, Subnets information in the command line to bash. 
+
+Wait for the process and the instance will create a stack. 
+
+
+2: sh file : csye6225-aws-networking-teardown.sh file to delete the instacne from the cloud. Enter the details in the console and follow the request given.
+
+
+

@@ -1,86 +1,20 @@
- #!/bin/bash
-
+#!/bin/bash
 vpcid=$1
 
-if [ -z "$1" ]
-then
-	echo "Please enter VPC"
-	exit 1
-fi
+# Delete subnets
+for i in `aws ec2 describe-subnets --filters Name=vpc-id,Values="${vpcid}" | grep subnet- | sed -E 's/^.*(subnet-[a-z0-9]+).*$/\1/'`; do aws ec2 delete-subnet --subnet-id=$i; done
 
-echo "VPC and resources deletion started"
+# Detach internet gateways
+for i in `aws ec2 describe-internet-gateways --filters Name=attachment.vpc-id,Values="${vpcid}" | grep igw- | sed -E 's/^.*(igw-[a-z0-9]+).*$/\1/'`; do aws ec2 detach-internet-gateway --internet-gateway-id=$i --vpc-id=$vpcid; done
 
-#Fetching all subnet for VPC
-subnet_reponse=$(aws ec2 describe-subnets --filters Name=vpc-id,Values="${vpcid}" --output json)
-subnet1=$(echo -e "$subnet_reponse" | jq '.Subnets[0].SubnetId' | tr -d '""')
-subnet2=$(echo -e "$subnet_reponse" | jq '.Subnets[1].SubnetId' | tr -d '""')
-subnet3=$(echo -e "$subnet_reponse" | jq '.Subnets[2].SubnetId' | tr -d '""')
+# Delete internet gateways
+aws ec2 delete-internet-gateway --internet-gateway-id=$i
 
-#Fetching routing table attached to subnets
-routing_table_id=$(aws ec2 describe-route-tables --filter Name="association.subnet-id",Values="$subnet1" \
- --query "RouteTables[0].RouteTableId" --output text)
+# Delete route table
+for i in `aws ec2 describe-route-tables --filters Name=vpc-id,Values="${vpcid}" | grep rtb- | sed -E 's/^.*(rtb-[a-z0-9]+).*$/\1/'`; do aws ec2 delete-route-table --route-table-id=$i; done
 
-#Deleting subnet
-aws ec2 delete-subnet --subnet-id "$subnet1"
-if [ $? -eq 0 ]
-then
-    echo "Subnet 1 deleted, ID : "$subnet1
-else
-    echo "Error while deleting Subnet 1" 
-    exit 1
-fi
+# Delete route 
+#aws ec2 delete-route --route-table-id=$i --destination-cidr-block 0.0.0.0/0
 
-aws ec2 delete-subnet --subnet-id "$subnet2"
-if [ $? -eq 0 ]
-then
-    echo "Subnet 2 deleted, ID : "$subnet2
-else
-    echo "Error while deleting Subnet 2" 
-    exit 1
-fi
-
-aws ec2 delete-subnet --subnet-id "$subnet3"
-if [ $? -eq 0 ]
-then
-    echo "Subnet 3 deleted, ID : "$subnet3
-else
-    echo "Error while deleting Subnet 3" 
-    exit 1
-fi
-
-#Deleting routing table
-aws ec2 delete-route-table --route-table-id "$routing_table_id"
-if [ $? -eq 0 ]
-then
-    echo "Routing table deleted, ID : "$routing_table_id
-else
-    echo "Error while deleting routing table" 
-    exit 1
-fi
-
-#Fetchin Internet gateway attached to VPC
-internet_gateway_Id=$(aws ec2 describe-internet-gateways --filters Name="attachment.vpc-id",\
-Values="$vpcid" --query "InternetGateways[0].InternetGatewayId" --output text)
-
-#Detaching internet gateway from VPC
-aws ec2 detach-internet-gateway --internet-gateway-id "$internet_gateway_Id" --vpc-id "$vpcid" 
-
-#Deleting internet gateway
-aws ec2 delete-internet-gateway --internet-gateway-id "$internet_gateway_Id"
-if [ $? -eq 0 ]
-then
-    echo "Internet Gateway deleted, ID : "$internet_gateway_Id
-else
-    echo "Error while deleting Internet Gateway" 
-    exit 1
-fi
-
-#Delete VPC
-aws ec2  delete-vpc --vpc-id "$vpcid"
-if [ $? -eq 0 ]
-then
-    echo "VPC deleted, ID : "$vpcid
-else
-    echo "Error while VPC" 
-    exit 1
-fi
+# Delete the VPC
+aws ec2 delete-vpc --vpc-id ${vpcid}

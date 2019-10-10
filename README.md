@@ -7,11 +7,10 @@
 | Samartha Swaroop Girish| |001401907| |girish.s@husky.neu.edu|
 
 ## Technology Stack
-Programming Language: Java
-Database: MySQL Database
-Dependency: Gradle
-IDE used: STS
-Repository/Version Control: Git
+AWS Cloud Infrastructure with -
+- AWS Command Line Interface
+- AWS CloudFormation
+- Terraform
 
 ## Build Instructions
 
