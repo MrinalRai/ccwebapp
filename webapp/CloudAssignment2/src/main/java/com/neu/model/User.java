@@ -9,6 +9,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
@@ -23,17 +24,17 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "user")
-@JsonIgnoreProperties(value = {"create_date", "modify_date","password"}, 
+@JsonIgnoreProperties(value = {"create_date", "modify_date"}, 
        allowGetters = true)
 public class User{
 	@Id
-	@GeneratedValue(generator = "UUID")
-	@GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-	
-	private String id;
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "id", unique = true, nullable = false, columnDefinition = "BINARY(16)")
+	private UUID id;
 
     @Column(name = "firstname",nullable=false)
     private String firstname;
@@ -44,6 +45,7 @@ public class User{
     @Column(name = "email",nullable=false)
     private String email;
     
+    @JsonIgnore
     @Column(name = "password",nullable=false)
     private String password;
 
@@ -56,10 +58,6 @@ public class User{
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "account_updated", updatable= false)
     private Date modifyDate;
-    
-
-    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL,mappedBy = "user")
-    private Recipie recipie;
 	
     
     public Date getCreateDate() {
@@ -78,19 +76,11 @@ public class User{
 		this.modifyDate = modifyDate;
 	}
 
-	public Recipie getRecipie() {
-		return recipie;
-	}
-
-	public void setRecipie(Recipie recipie) {
-		this.recipie = recipie;
-	}
-
-	public String getId() {
+	public UUID getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(UUID id) {
 		this.id = id;
 	}
 
@@ -123,6 +113,7 @@ public class User{
 		return password;
 	}
 
+	@JsonProperty
 	public void setPassword(String password) {
 		this.password = password;
 	}

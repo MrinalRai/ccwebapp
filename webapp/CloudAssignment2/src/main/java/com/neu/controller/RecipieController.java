@@ -1,15 +1,15 @@
 package com.neu.controller;
 
-import java.net.MalformedURLException;
 import java.util.HashMap;
-
-import javax.validation.Valid;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +24,7 @@ import com.neu.model.Recipie;
 import com.neu.service.RecipieService;
 
 @RestController
-@RequestMapping(path="/v1")
+@RequestMapping(path="/v1/recipie")
 public class RecipieController {
 	
 	@Autowired
@@ -32,14 +32,14 @@ public class RecipieController {
 
 	private final static Logger logger = LoggerFactory.getLogger(RecipieController.class);
 	
-	@PostMapping("/recipie/")
-	public ResponseEntity<Object> addUsers(@Valid @RequestBody Recipie recipie) throws RecipieValidationException {
+	@PostMapping("/")
+	public ResponseEntity<Object> addUsers(@RequestBody Recipie recipie, Authentication auth) throws RecipieValidationException {
 		
 		System.out.println("Inside post /recipie mapping");		
 		logger.info("Inside post /recipie mapping");
 
 		HashMap<String, Object> entities = new HashMap<String, Object>();
-		Recipie rec = recService.add(recipie);
+		Recipie rec = recService.add(recipie, auth);
 		try {
 		if(rec!=null) {
 			entities.put("rec", rec);
@@ -55,63 +55,48 @@ public class RecipieController {
 		}
 	}
 	
-	@DeleteMapping("/recipie/{id}")
-	public ResponseEntity<Object> deleteRecipie(@PathVariable(value = "id") String recipieId) throws MalformedURLException, RecipieValidationException {
-		//statsDClient.incrementCounter("endpoint.book.id.http.del");
-		logger.info("Inside /recipie/del recipie DELETE mapping");
-		Recipie rec = recService.getRecipieById(recipieId);
-		//Book book = bookDaoServiceImpl.getBookById(bookId);
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Object> deleteRecipie(@PathVariable UUID id, Authentication auth) throws Exception{
+
+		logger.info("Inside recipie delete mapping");
 		HashMap<String, Object> entities = new HashMap<String, Object>();
 		try {
-		if (null == rec) {
-			entities.put("message", "Rec does not exists");
-			return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
-		} 
-		else{
-			recService.deleteRecipie(rec);
+			recService.delete(id,auth);
 			entities.put("Deleted", "Book was successfuly deleted");
 			return new ResponseEntity<>(entities, HttpStatus.NO_CONTENT);
-		}
+		
 		}catch(Exception e) {
-			entities.put("message", "Rec does not exists");
+			entities.put("message", e.getMessage());
 			return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
 		}
 	}
 	
-	@PutMapping("/recipie/{id}")
-	public ResponseEntity<Object> updateRecipie(@RequestBody Recipie recipie, @PathVariable String id) throws RecipieValidationException{
-		logger.info("Inside /recipie/{id} PUT mapping");
+	@PutMapping("/{id}")
+	public ResponseEntity<Object> updateRecipie(@RequestBody Recipie recipie, Authentication auth, @PathVariable UUID id) throws Exception{
+		logger.info("Inside recipie PUT mapping");
 		HashMap<String, Object> entities = new HashMap<String, Object>();
 		try {
-			
-			Recipie rec = recService.getRecipieById(id);
-			if (null == rec) {
-				entities.put("message", "Recipie does not exist");
-				return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
-			}else {
-				Recipie updatdRec = recService.updateRecipie(recipie, id);
+				Recipie updatdRec = recService.update(recipie, auth, id);
 				entities.put("recipie", updatdRec);
 				return new ResponseEntity<>(entities,HttpStatus.OK);			
-			}
-		}catch(RecipieValidationException rve){
-			entities.put("message", rve.getMessage());
-			return new ResponseEntity<>(entities,HttpStatus.BAD_REQUEST);			
 			
-		}
-		
+		}catch(Exception e){
+			entities.put("message", e.getMessage());
+			return new ResponseEntity<>(entities,HttpStatus.BAD_REQUEST);			
+		}		
 	}
 	
-	@GetMapping("/recipie/{id}")
-	public ResponseEntity<Object> getBookById(@PathVariable(value = "id") String recId) throws MalformedURLException, RecipieValidationException {
+	@GetMapping("/{id}")
+	public ResponseEntity<Object> getBookById(@PathVariable UUID id) throws Exception{
 		logger.info("Inside /recipie/{id} GET mapping");
 		HashMap<String, Object> entities = new HashMap<String, Object>();
 		try {
-		Recipie rec = recService.getRecipieById(recId);
+		Optional<Recipie> rec = recService.getRecipieById(id);
 		if (null == rec) {
 			entities.put("message", "Recipie does not exists");
 			return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
 		}else {
-			entities.put("recipie",rec);
+			entities.put("recipie:",rec);
 			return new ResponseEntity<>(entities,HttpStatus.OK);
 		}	
 		}catch(Exception e) {
@@ -120,6 +105,7 @@ public class RecipieController {
 		}
 		
 	}
+	
 	
 	
 }

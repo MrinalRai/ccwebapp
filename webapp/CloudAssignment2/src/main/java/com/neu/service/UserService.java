@@ -1,99 +1,63 @@
 package com.neu.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCrypt;
-import org.springframework.stereotype.Component;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
-import com.neu.exceptionHandler.UserNotFoundException;
-import com.neu.exceptionHandler.UserServiceValidationException;
+import com.neu.exceptionHandler.UserServiceException;
 import com.neu.model.User;
 import com.neu.repository.UserRepository;
 
-@Component
-public class UserService{
+@Service
+public class UserService {
 
 	@Autowired
 	private UserRepository userRepo;
-	
-	
-	public User add(User user) {
-		User u = new User();
-		List<User> userList = new ArrayList<>();
-		u.setFirstname(user.getFirstname());
-		u.setLastname(user.getLastname());
-		for(User ul: userList) {
-			if(ul.equals(user.getEmail())) {
-				throw new UserNotFoundException("This user is already registered");
-			}else {
-				u.setEmail(user.getEmail());
-			}
-		}
-		
-		String pw = user.getPassword();
-		String salt = BCrypt.gensalt();
-		pw = BCrypt.hashpw(pw, salt);
-		u.setPassword(pw);		
-		//u.setPassword(user.getPassword());
-		return userRepo.save(u);
-	}
-		
+	@Autowired
+	PasswordEncoder encoder;
 
-	public String update(User user, String email) throws UserServiceValidationException {
-		
-		if(!(user.getEmail().equals(email))) {
-			throw new UserServiceValidationException("You can not change the email id");
-		}
-		String returning = null;
-		List<User> ul = (List<User>) userRepo.findAll();
-		for(User u: ul) {
-			if (!(u.getEmail().equals(email))) {
-				returning= "notFound";
-				throw new UserNotFoundException("This email id is not registered for any user");				
-			}
-			else {
+	public User add(User user) throws Exception {
+		User u = new User();
+		Optional<User> ul = userRepo.findUserByEmail(user.getEmail());
+		if (ul.isPresent()) {
+			throw new UserServiceException("This user is already registered");
+		} else {
+			u.setEmail(user.getEmail());
+
 			u.setFirstname(user.getFirstname());
 			u.setLastname(user.getLastname());
-			//String userEmail = user.getEmail();
-			u.setEmail(email);
-			
-			String pw = user.getPassword();
-			String salt = BCrypt.gensalt();
-			pw = BCrypt.hashpw(pw, salt);
-			u.setPassword(pw);	
-			userRepo.save(u);
-			returning= "updated";
-			break;
-			}
-		} 
-		return returning; 
-		
-	}
-	
-	public Iterable<User> getAllUsers(){
-		return userRepo.findAll();
-	}
-	
-	public User getUserByEmail(String email) {
-		User u = userRepo.findByEmail(email);
-		if(u.equals(null)) {
-			throw new UserNotFoundException("This email id is not registered for any user");			
+			u.setPassword(encoder.encode(user.getPassword()));
+			return userRepo.save(u);
 		}
-		return u;
 	}
-	
-//	public User loadUserByUsername(String email) {
-//		List<User> userList = new ArrayList<>();
-//		
-//		for(User ul: userList) {
-//			if(!((ul.getEmail()).equals(email))) {
-//				throw new UserNotFoundException("User not found");
-//			}else {
-//				return ul;
-//			}
-//		}
-//	}
+
+	public ResponseEntity<Object> update(User user, Authentication auth) throws Exception {
+
+		ResponseEntity<Object> responseEntity;
+		Optional<User> ul = userRepo.findUserByEmail(user.getEmail());
+		if (ul.isPresent()) {
+			User u = (User) ul.get();
+
+			if (!user.getEmail().equals(auth.getName())) {
+				throw new UserServiceException("Given email does not math with the authenticated one");
+			}
+			// check if valid fields are updated
+			if (user.getFirstname() != null || user.getLastname() != null || (user.getPassword() != null) ) {
+				u.setFirstname(user.getFirstname());
+				u.setLastname(user.getLastname());
+				u.setPassword(encoder.encode(user.getPassword()));
+				userRepo.save(u);
+				responseEntity = new ResponseEntity<Object>(HttpStatus.NO_CONTENT);
+				return responseEntity;
+			}
+		}
+		responseEntity = new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+		return responseEntity;
+	}
 
 }
