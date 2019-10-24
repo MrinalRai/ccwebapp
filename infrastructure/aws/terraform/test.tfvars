@@ -1,5 +1,0 @@
-region = "us-east-1 FOR DEV"
-vpcCIDRblock = "IP/16"
-subnetCIDRblock1 = "10.0.num.0/24"
-subnetCIDRblock2 = "10.0.num.0/24"
-subnetCIDRblock3 = "10.0.num.0/24"
