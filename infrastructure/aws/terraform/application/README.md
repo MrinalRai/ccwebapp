@@ -7,15 +7,15 @@
 2:varibles.tf : Contains all the variable declaration. These will be asked while running the script if no default value is set.
 
 Steps: for creation -- 
-1: terraform init
-2: export AWS_PROFILE= ___
-3: terraform plan
-4: terraform apply
+- 1: terraform init
+- 2: export AWS_PROFILE="your_value"
+- 3: terraform plan
+- 4: terraform apply
 
 Wait for the process, it will create the instance in the cloud. Check for instance under EC2 and RDS modules on AWS.
 
 Termination of all instances -- 
-1: terraform destroy
+- 1: terraform destroy
 
 Wait for the process. 
 
