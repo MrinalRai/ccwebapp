@@ -21,14 +21,8 @@ AWS Cloud Infrastructure with -
 - EC2
 
 ## Build Instructions
-
-
 ## Deploy Instructions
-
-
 ## Running Tests
-
-
 ## CI/CD
 
 
