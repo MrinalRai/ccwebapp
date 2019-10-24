@@ -1,14 +1,16 @@
 package com.neu.model;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
@@ -18,23 +20,25 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.validator.constraints.UniqueElements;
+import org.springframework.data.annotation.ReadOnlyProperty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "recipie")
-@JsonIgnoreProperties(value = {"created_ts", "updated_ts"}, 
-allowGetters = true)
+@JsonIgnoreProperties(value = {"created_ts", "updated_ts"})
 public class Recipie {
-	@Id
-	@GeneratedValue(generator = "UUID")
-	@GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
 	
-	private String id;
+	@Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name="id",unique = true,nullable = false, columnDefinition = "BINARY(16)")
+    private UUID id;
 	
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
@@ -46,13 +50,16 @@ public class Recipie {
     @Column(name = "updated_ts",nullable=false,updatable= false)
     private Date updated_ts;
     
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @ReadOnlyProperty
+    private UUID user_id;
     
+
+    @Min(value = 1, message = "please provide cook_time_in_min greater than 1")
     @Column(name = "cook_time_in_min",nullable=false)
     private int cook_time_in_min;
     
+
+    @Min(value = 1, message = "please provide prep_time_in_min greater than 1")
     @Column(name = "prep_time_in_min",nullable=false)
     private int prep_time_in_min;
     
@@ -66,26 +73,47 @@ public class Recipie {
     private String cusine;
     
     @Column(name = "servings",nullable=false)
-    @Max(5)
-    @Min(1)
+    @Max(value = 5, message = "servings must have a value between 1 and 5")
+    @Min(value = 1, message = "servings must have a value between 1 and 5")
     private int servings;
     
-    @Column(name = "ingredients",nullable=false)
+    @UniqueElements
+    @NotEmpty(message = "PLease provide ingredients")
+    @ElementCollection
     private List<String> ingredients;
-    
-    @OneToMany(mappedBy="recipie")
-   // @Column(name= "steps",nullable=false)
-    private Set<OrderedList> oList;
-    
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "nInfo_id", nullable = false)
-    private NutritionInformation nInfo;
 
-	public String getId() {
+    @OneToMany(cascade = CascadeType.ALL)
+    @NotEmpty(message = "Please provide the steps for recipie")
+    private List<OrderedList> steps;
+
+    @OneToOne (cascade=CascadeType.ALL)
+    @JoinColumn(unique= true, insertable=true, updatable=true)
+    @NotNull(message = "Please provide Nutrition Information")
+    private NutritionInformation nutrition_information;
+    
+
+    @OneToOne (cascade=CascadeType.ALL)
+    @JoinColumn(unique= true, insertable=true, updatable=true)
+    //@NotNull(message = "Please provide Nutrition Information")
+    private Image image;
+    
+
+//    @OneToOne (cascade=CascadeType.ALL)
+//    @JoinColumn(unique= true, insertable=true, updatable=true)
+//    @NotNull(message = "Insert value for image url")
+//    @Max(value = 1, message = "Only one image is allowed for a recipie")
+//    private Image image;
+
+    public Recipie() {
+    	steps = new ArrayList<>();
+        ingredients = new ArrayList<>();
+    }
+
+	public UUID getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(UUID id) {
 		this.id = id;
 	}
 
@@ -105,13 +133,6 @@ public class Recipie {
 		this.updated_ts = updated_ts;
 	}
 
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
 
 	public int getCook_time_in_min() {
 		return cook_time_in_min;
@@ -161,6 +182,32 @@ public class Recipie {
 		this.servings = servings;
 	}
 
+	public UUID getUser_id() {
+		return user_id;
+	}
+
+	public void setUser_id(UUID user_id) {
+		this.user_id = user_id;
+	}
+
+
+
+	public List<OrderedList> getSteps() {
+		return steps;
+	}
+
+	public void setSteps(List<OrderedList> steps) {
+		this.steps = steps;
+	}
+
+	public NutritionInformation getNutrition_information() {
+		return nutrition_information;
+	}
+
+	public void setNutrition_information(NutritionInformation nutrition_information) {
+		this.nutrition_information = nutrition_information;
+	}
+
 	public List<String> getIngredients() {
 		return ingredients;
 	}
@@ -169,22 +216,21 @@ public class Recipie {
 		this.ingredients = ingredients;
 	}
 
-	public Set<OrderedList> getoList() {
-		return oList;
+	public Image getImage() {
+		return image;
 	}
 
-	public void setoList(Set<OrderedList> oList) {
-		this.oList = oList;
+	public void setImage(Image image) {
+		this.image = image;
 	}
 
-	public NutritionInformation getnInfo() {
-		return nInfo;
-	}
-
-	public void setnInfo(NutritionInformation nInfo) {
-		this.nInfo = nInfo;
-	}
-    
+//	public Image getImage() {
+//		return image;
+//	}
+//
+//	public void setImage(Image image) {
+//		this.image = image;
+//	} 
     
 
 }

@@ -1,7 +1,7 @@
 package com.neu.CloudAssignment2;
 
 import com.neu.controller.UserController;
-import javafx.beans.binding.Bindings;
+//import javax.beans.bindings;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,7 +23,7 @@ public class UserControllerTest {
 private MockMvc mockMvc;
 @InjectMocks
     private UserController userController;
-    private Bindings RestAssured;
+    //private Bindings RestAssured;
 
     @Before
 public void setup(){

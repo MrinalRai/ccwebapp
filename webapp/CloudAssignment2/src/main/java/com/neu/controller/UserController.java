@@ -1,33 +1,23 @@
 package com.neu.controller;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
-
-import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-//import com.neu.controller.UserController;
-import com.neu.exceptionHandler.UserNotFoundException;
-import com.neu.exceptionHandler.UserServiceException;
-import com.neu.exceptionHandler.UserServiceValidationException;
 import com.neu.model.User;
+import com.neu.repository.UserRepository;
 import com.neu.service.UserService;
 
 @RestController
@@ -36,142 +26,61 @@ public class UserController {
 	
 	@Autowired
 	private UserService userService;	
+	
+	@Autowired
+	private UserRepository userRepo;
+	
+	@Autowired
+	private PasswordEncoder encoder;
 
 	private final static Logger logger = LoggerFactory.getLogger(UserController.class);
 	
-	@GetMapping(path = "/self", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Object> listUser() {
-		
-		//System.out.println("-----------statsDClient.toString()--------------");
-		
-		logger.info("--Inside root mapping--");
-		//statsDClient.incrementCounter("endpoint.login.http.get");
-		HashMap<String, Object> entities = new HashMap();
-		entities.put("Status", "Authenticated");
-		SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-		entities.put("Time", formatter.format(new Date()));
-
-		return ResponseEntity.ok(entities);
-	}
 	
 	@GetMapping("/self")
-    public ResponseEntity<Object> getUser(Authentication authentication) {
-		User u = userService.getUserByEmail(authentication.getName());
-		HashMap<String, Object> entities = new HashMap();
-		if(null==u) {
-			entities.put("Message", "User doesn't exist");
-			return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
-		}else {
-			entities.put("User", u);
-			return new ResponseEntity<>(entities, HttpStatus.OK);
-		}
-        //return userRepository.findUserByEmailaddress(authentication.getName()).get();
-    }
-//	@GetMapping(path="/user")
-//	public @ResponseBody ResponseEntity<Iterable<User>> getAllUsers(){
-//		List<User> users;
-//		try {
-//			users = (List<User>) userService.getAllUsers();
-//		}catch (UserNotFoundException ux) {
-//			return new ResponseEntity<>(null, null, HttpStatus.NOT_FOUND);
-//		}
-//		 return new ResponseEntity<>(users, HttpStatus.OK);
-//	}
-	
+    public User getUser(Authentication authentication) {
 
+		logger.info("Inside get: /user/self mapping");
+        return userRepo.findUserByEmail(authentication.getName()).get();
+    }	
 	
-	@GetMapping(path="/user/self",produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Object> getUserByEmail(@PathVariable String email) throws UserServiceException{
-		User user;
-		HashMap<String, Object> entities = new HashMap();
+	@PostMapping
+	public ResponseEntity<Object> addUsers(@RequestBody User user) throws Exception {
+
+		logger.info("Inside post: /user mapping");
+		HashMap<String, Object> entities = new HashMap<String, Object>();
+		ResponseEntity<Object> responseEntity = null;
 		try {
-			user = userService.getUserByEmail(email);
-		}catch (UserNotFoundException unx) {
-			entities.put("Message: ", unx.getMessage());
-			return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
-		}
-		 entities.put("User", user);
-		 return new ResponseEntity<>(user, HttpStatus.OK);
-		//return userService.getUserByEmail(email);
-	}
-			
-//	@PostMapping(path="/user")	
-//	public @ResponseBody String addUsers(@RequestBody User user) {
-//		logger.info("Inside post V1/user mapping");
-//		
-//		userService.add(user);
-//		return "Saved";
-//	}
-	
-	@PostMapping("/user")
-	public ResponseEntity<Object> addUsers(@Valid @RequestBody User user) {
-		
-		System.out.println("Inside post /user mapping");		
-		logger.info("Inside post /user mapping");
 
-		HashMap<String, Object> entities = new HashMap();
-		User ent = null;
-		if (validateEmail(user.getEmail()) && validatePassword(user.getPassword())) {
-			if(null == userService.getUserByEmail(user.getEmail())) {
-				ent = userService.add(user);
-				//ent = userDaoService.save(user);
-				//byte[] enc = Base64.getEncoder().encode(auth.getBytes(Charset.forName("US-ASCII")));
-				entities.put("Message:", "User is saved");
-				return new ResponseEntity<>(entities,HttpStatus.CREATED);
+			if (validateEmail(user.getEmail()) && validatePassword(user.getPassword())) {
+				if (user.getId() == null && user.getCreateDate() == null && user.getModifyDate() == null) {
+					User ent = userService.add(user);
+					entities.put("User detail:", ent);
+					responseEntity = new ResponseEntity<>(entities, HttpStatus.CREATED);
+				}
 			} else {
-				entities.put("Message", "User already exists !!");
-				return new ResponseEntity<>(entities, HttpStatus.FORBIDDEN);
+				entities.put("Invalid Format",
+						"Please input correct format for email id and/or a Password with atleast 8 chars including 1 number and a special char");
+				responseEntity = new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
 			}
-		} else {
-			entities.put("Invalid Format","Please input correct format for email id and/or a Password with atleast 8 chars including 1 number and a special char");
-			return new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
+		} catch (Exception e) {
+			entities.put("Message: ", e.getMessage());
+			responseEntity = new ResponseEntity<>(entities, HttpStatus.FORBIDDEN);
+
 		}
+		return responseEntity;
+
 	}
 	
-	@PutMapping(path="/user/self")
-	public ResponseEntity<Object> updateUsers(@RequestBody User user, @PathVariable String email) throws UserServiceValidationException {
-		
-		System.out.println("Inside put /user/self mapping");		
-		logger.info("Inside put /user/self mapping");
-		
-		HashMap<String, Object> entities = new HashMap();
-		User ent = null;
-		
-		try{
-			if(userService.update(user, email).equalsIgnoreCase("notFound"))
-			{
-				entities.put("Message:", "User is not found");
-				return new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
-				}else if (validatePassword(user.getPassword())) {
-					entities.put("Message:", "User details updated");
-					return new ResponseEntity<>(entities,HttpStatus.ACCEPTED);
-				}else {
-					entities.put("Invalid Format:","Please input correct format for email id and/or a Password with atleast 8 chars including 1 number and a special char");
-					return new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
-					
-				}
-				
-		}catch(UserServiceValidationException usx) {
-			entities.put("Message", usx.getMessage());
-			return new ResponseEntity<>(entities, HttpStatus.FORBIDDEN);
-		}		
-	}
-//	@PutMapping(path="/user/self")
-//	public @ResponseBody String updateUsers(@RequestBody User user, @PathVariable String email) throws UserServiceValidationException {
-//		try{
-//			if(userService.update(user, email).equalsIgnoreCase("notFound"))
-//			{
-//				return "User not found";
-//				}else return "Updated";
-//				
-//		}catch(UserServiceValidationException usx) {
-//			return "You can not change the email id";
-//		}		
-//	}
+	@PutMapping("/self")
+    public ResponseEntity<Object> updateUser(@RequestBody User user, Authentication auth) throws Exception {
+
+		logger.info("Inside put: /user/self mapping");
+        return userService.update(user, auth);
+    }
 	
 	public Boolean validatePassword(String password) {
 		if (password != null && (!password.equalsIgnoreCase(""))) {
-			String pattern = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}";
+			String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])(?=\\S+$).{8,}$";
 			return (password.matches(pattern));
 		} else {
 			return Boolean.FALSE;
@@ -181,8 +90,7 @@ public class UserController {
 
 	public Boolean validateEmail(String email) {
 		if (email != null && (!email.equalsIgnoreCase(""))) {
-			String emailvalidator = "^[a-zA-Z0-9_+&*-]+(?:\\." + "[a-zA-Z0-9_+&*-]+)*@" + "(?:[a-zA-Z0-9-]+\\.)+[a-z"
-					+ "A-Z]{2,7}$";
+			String emailvalidator = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
 
 			return email.matches(emailvalidator);
 		} else {

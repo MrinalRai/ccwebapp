@@ -1,5 +1,7 @@
 package com.neu.model;
 
+import java.util.UUID;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,36 +11,42 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "nutrition_information")
 public class NutritionInformation {
-
-    @Id
+	
+	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @Column(name="id",unique = true,nullable = false, columnDefinition = "BINARY(16)")
+    private UUID id;
 
     @Column(name = "calories",nullable=false)
+    @NotNull(message = "Calories section can not be null")
     private int calories;
-    @Column(name = "cholesterol_in_mg",nullable=false)
-    private float cholesterol_in_mg;
-    @Column(name = "sodium_in_mg",nullable=false)
-    private int sodium_in_mg;
-    @Column(name = "carbohydrates_in_grams",nullable=false)
-    private float carbohydrates_in_grams;
-    @Column(name = "protein_in_grams",nullable=false)
-    private float protein_in_grams;
     
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "recipie_id", referencedColumnName = "id")
-    private Recipie recipie;
-   
+    @Column(name = "cholesterol_in_mg",nullable=false)
+    @NotNull(message = "Cholestrol section can not be null")
+    private float cholesterol_in_mg;
+    
+    @Column(name = "sodium_in_mg",nullable=false)
+    @NotNull(message = "Sodium section can not be null")
+    private int sodium_in_mg;
+    
+    @Column(name = "carbohydrates_in_grams",nullable=false)
+    @NotNull(message = "Carbohydrate section can not be null")
+    private float carbohydrates_in_grams;
+    
+    @Column(name = "protein_in_grams",nullable=false)
+    @NotNull(message = "Protein section can not be null")
+    private float protein_in_grams;   
 
-	public Long getId() {
+	public UUID getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public void setId(UUID id) {
 		this.id = id;
 	}
 
@@ -82,11 +90,4 @@ public class NutritionInformation {
 		this.protein_in_grams = protein_in_grams;
 	}
 
-	public Recipie getRecipie() {
-		return recipie;
 	}
-
-	public void setRecipie(Recipie recipie) {
-		this.recipie = recipie;
-	}
-}

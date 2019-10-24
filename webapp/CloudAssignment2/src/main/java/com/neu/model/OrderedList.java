@@ -1,5 +1,7 @@
 package com.neu.model;
 
+import java.util.UUID;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -11,28 +13,30 @@ import javax.persistence.Table;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "orderedList")
 public class OrderedList {
-	
-	@Id
+
+    @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @Column(name="id",unique = true,nullable = false, columnDefinition = "BINARY(16)")
+    @JsonIgnore
+    private UUID id;
 	
 	@Column(name = "position")
-	@Min(1)
+	@Min(value = 1, message = "Please provide position value greater than 1")
     private int position;
+	
+	@NotNull(message = "Item field can not be null")
 	@Column(name = "items")
     private String items;
-	
-	 @ManyToOne
-	 @JoinColumn(name="recipie_id", nullable=false, updatable= false)
-	 private Recipie recipie;
 
-	public Long getId() {
+	public UUID getId() {
 		return id;
 	}
-	public void setId(Long id) {
+	public void setId(UUID id) {
 		this.id = id;
 	}
 	public int getPosition() {
@@ -47,11 +51,4 @@ public class OrderedList {
 	public void setItems(String items) {
 		this.items = items;
 	}
-	public Recipie getRecipie() {
-		return recipie;
-	}
-	public void setRecipie(Recipie recipie) {
-		this.recipie = recipie;
-	}
-
 }
