@@ -2,6 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '2.1.8.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 	id 'java'
+	id 'war'
 }
 
 group = 'com.neu'
@@ -29,6 +30,8 @@ dependencies {
 	testCompile group: 'org.springframework.security', name: 'spring-security-test', version: '5.1.6.RELEASE'
 	
 	runtimeOnly 'mysql:mysql-connector-java'
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+ 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.neu.exceptionHandler.ImageException;
 import com.neu.exceptionHandler.RecipieValidationException;
 import com.neu.model.Image;
 import com.neu.model.Recipie;
@@ -55,7 +56,7 @@ public class ImageController {
 			return new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
 		}
 		}catch(Exception e) {
-			entities.put("message", e.getMessage());
+			entities.put("message","Image already present in recipie");
 			return new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
 		}
 	}

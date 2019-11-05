@@ -72,14 +72,14 @@ public class ImageService {
     	}
         String fileUrl = "";
         //try {
-        if(!(rec.getImage().equals(null))) {
+        if(multipartFile.getContentType().equals("image/jpeg")||multipartFile.getContentType().equals("image/png")||multipartFile.getContentType().equals("image/jpg")) {
             File file = convertMultiPartToFile(multipartFile);
             String fileName = generateFileName(multipartFile);
             fileUrl = endpointUrl + "/" + bucketName + "/" + fileName;
             uploadFileTos3bucket(fileName, file);
             file.delete();
         }else {
-        	throw new ImageException("Image already present in this recipie");
+        	throw new ImageException("Please upload png/jpg/jpeg image");
         }
 //        } catch (Exception e) {
 //           e.printStackTrace();

@@ -2,7 +2,29 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: circleci/python:3.6.8
     steps:
       - checkout
-      
+      - run:
+        name: apt-get
+        command: sudo apt-get update && sudo apt-get install wget zip unzip -y
+     - run:
+        name: Install awscli
+        command: sudo pip install awscli
+     - run:
+        name: Download packer
+        command:  
+            wget -q https://releases.hashicorp.com/packer/1.4.4/packer_1.4.4_linux_amd64.zip
+            unzip packer*.zip
+            ls -al
+            chmod +x packer
+            ls -al
+     -run:
+        name: Validate & Build AMI
+        command:  
+            ./packer validate centos.json
+            ./packer build \
+            -var 'aws_region=us-east-2' \
+            -var 'aws_access_key=AKIAWJ2VS5PDMC6GPWEO' \
+            -var 'aws_secret_key=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' \
+            centos.json

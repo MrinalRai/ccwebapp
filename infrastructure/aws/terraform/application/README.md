@@ -9,8 +9,8 @@
 Steps: for creation -- 
 - 1: terraform init
 - 2: export AWS_PROFILE="your_value"
-- 3: terraform plan
-- 4: terraform apply
+- 3: terraform plan -var-file="values.tfvars"
+- 4: terraform apply -var-file="values.tfvars"
 
 Wait for the process, it will create the instance in the cloud. Check for instance under EC2 and RDS modules on AWS.
 

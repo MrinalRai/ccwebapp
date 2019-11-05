@@ -43,3 +43,9 @@ variable "domain-name"{
   description = "Domain Name to be used for S3 bucket creation"
   type    = "string"
 }
+
+variable "region"{
+   description = "Region to be used for S3 bucket and VPC creation"
+  type    = "string"
+default="us-east-2"
+}
