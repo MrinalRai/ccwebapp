@@ -1,30 +1,70 @@
 version: 2
 jobs:
   build:
+    branches:
+      only:
+        - Assignment7
     docker:
-      - image: circleci/python:3.6.8
+      # specify the version you desire here
+      - image: circleci/openjdk:8-jdk
+      - image: circleci/mysql:8.0.4
+        environment:
+          MYSQL_ROOT_PASSWORD: Admit$18
+          MYSQL_DATABASE: cloudDb
+          MYSQL_USER: root
+          MYSQL_PASSWORD: Admit$18
     steps:
       - checkout
       - run:
-        name: apt-get
-        command: sudo apt-get update && sudo apt-get install wget zip unzip -y
-     - run:
-        name: Install awscli
-        command: sudo pip install awscli
-     - run:
-        name: Download packer
-        command:  
-            wget -q https://releases.hashicorp.com/packer/1.4.4/packer_1.4.4_linux_amd64.zip
-            unzip packer*.zip
+          name: Install AWS CLI
+          command: |
+            sudo apt-get -y -qq install awscli
+            aws --version
+      - run:
+          name: Build JAR and Run Unit Tests
+          command: |
+            cd webapp/CloudAssignment2
+            rm -rf build
+            chmod +x gradlew
+            ./gradlew clean build package
+      - run:
+          name: Zip JAR File
+          command: |
+            mkdir artifacts
+            zip -r csye6225-webapp-${CIRCLE_BUILD_NUM}.zip infrastructure/aws/codedeploy/*.sh webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war appspec.yml
+            pwd
             ls -al
-            chmod +x packer
-            ls -al
-     -run:
-        name: Validate & Build AMI
-        command:  
-            ./packer validate centos.json
-            ./packer build \
-            -var 'aws_region=us-east-2' \
-            -var 'aws_access_key=AKIAWJ2VS5PDMC6GPWEO' \
-            -var 'aws_secret_key=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' \
-            centos.json
+            mv csye6225-webapp-${CIRCLE_BUILD_NUM}.zip artifacts/
+            cd artifacts    
+            chmod 777 artifacts
+            ls -al 
+      - run:
+      # Our primary container isn't MYSQL so run a sleep command until it's ready.
+          name: Waiting for MySQL to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z ${RDS_URL} 3306 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
+      - run:
+          name: Install MySQL CLI; Import dummy data; run an example query
+          command: |
+            sudo apt-get install default-mysql-client
+            mysql -h ${RDS_URL} -u user -p Admit$18 cloudDb
+            mysql -h ${RDS_URL} -u user -p Admit$18
+      - run:
+          name: Upload ZIP to S3 bucket
+          command: aws s3 cp artifacts/csye6225-webapp-${CIRCLE_BUILD_NUM}.zip s3://${AWS_CODE_DEPLOY_BUCKET}/csye6225-webapp-${CIRCLE_BUILD_NUM}.zip
+      - run:
+          name: Configure cloudwatch
+          command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+                   -a fetch-config \
+                   -m ec2 \
+                   -c file:/opt/cloudwatch-config.json \
+                   -s
+      - run:
+          name: Create Deployment
+          command: aws deploy create-deployment --application-name csye6225-webapp --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name csye6225-webapp-deployment --description "CSYE6225 - Codedeploy" --region=${AWS_REGION} --s3-location bucket=${AWS_CODE_DEPLOY_BUCKET},bundleType=zip,key=csye6225-webapp-${CIRCLE_BUILD_NUM}.zip
