@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 
 files:
-  - source: ./build/libs/ROOT.war
+  - source: ./build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war
     destination: /opt/tomcat7/webapps
   - source: ./infrastructure/aws/cloudwatch-config.json
     destination: /opt
