@@ -27,7 +27,7 @@ jobs:
             cd webapp/CloudAssignment2
             rm -rf build
             chmod +x gradlew
-            ./gradlew clean build package
+            ./gradlew clean build
       - run:
           name: Zip JAR File
           command: |
@@ -51,7 +51,7 @@ jobs:
             done
             echo Failed waiting for MySQL && exit 1
       - run:
-          name: Install MySQL CLI; Import dummy data; run an example query
+          name: Install MySQL CLI
           command: |
             sudo apt-get install default-mysql-client
             mysql -h ${RDS_URL} -u user -p Admit$18 cloudDb
