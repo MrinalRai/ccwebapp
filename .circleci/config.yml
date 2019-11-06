@@ -5,7 +5,7 @@ jobs:
       only:
         - Assignment7
     docker:
-      # specify the version you desire here
+      # specify the version you desire here...
       - image: circleci/openjdk:8-jdk
     steps:
       - checkout
