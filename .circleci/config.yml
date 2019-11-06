@@ -28,7 +28,7 @@ jobs:
           command: |
             mkdir artifacts
             chmod 777 artifacts
-            zip -r csye6225-webapp-${CIRCLE_BUILD_NUM}.zip ./infrastructure/aws/codedeploy/*.sh webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war ./appspec.yml
+            zip -r csye6225-webapp-${CIRCLE_BUILD_NUM}.zip ./infrastructure/aws/codedeploy/*.sh webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war ./infrastructure/aws/appspec.yml
             pwd
             ls -al
             mv csye6225-webapp-${CIRCLE_BUILD_NUM}.zip artifacts/
