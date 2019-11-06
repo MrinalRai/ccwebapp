@@ -157,7 +157,7 @@ resource "aws_kms_key" "key" {
 	description = "This key is used to encrypt bucket objects"
 	deletion_window_in_days = 10
 }
-#Creating S3 Bucket
+#Creating S3 Buckets
 resource "aws_s3_bucket" "bucket" {
 	bucket = "codedeploy.${var.domain-name}"
 	acl    = "private"
@@ -188,6 +188,34 @@ resource "aws_s3_bucket" "bucket" {
 	}
  
 }
+resource "aws_s3_bucket" "bucket_image" {
+	bucket = "webapp.${var.domain-name}"
+	acl    = "private"
+	force_destroy = "true"
+	tags = "${
+      		map(
+     		"Name", "${var.domain-name}",
+    		)
+  	}"
+	server_side_encryption_configuration {
+    		rule {
+			apply_server_side_encryption_by_default {
+				kms_master_key_id = "${aws_kms_key.key.arn}"
+				sse_algorithm = "aws:kms" 
+			}
+      		}
+    	}
+	lifecycle_rule {
+	    id      = "log/"
+	    enabled = true
+		transition{
+			days = 30
+			storage_class = "STANDARD_IA"
+		}
+	}
+ 
+}
+
 # Creating DynamoDB table
 resource "aws_dynamodb_table" "basic-dynamodb-table" {
 	 name           = "csye6225"

@@ -7,12 +7,7 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/openjdk:8-jdk
-      - image: circleci/mysql:8.0.4
-        environment:
-          MYSQL_ROOT_PASSWORD: Admit$18
-          MYSQL_DATABASE: cloudDb
-          MYSQL_USER: root
-          MYSQL_PASSWORD: Admit$18
+      
     steps:
       - checkout
       - run:
