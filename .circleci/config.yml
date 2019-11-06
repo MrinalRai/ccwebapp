@@ -22,22 +22,22 @@ jobs:
             sudo apt-get install -y python3-pip
             sudo pip3 install awscli
       - run:
-          name: Build JAR and Run Unit Tests
+          name: Build WAR
           command: |
             cd webapp/CloudAssignment2
             rm -rf build
             chmod +x gradlew
             ./gradlew clean build
       - run:
-          name: Zip JAR File
+          name: Build Deployment Artifacts
           command: |
             mkdir artifacts
+            chmod 777 artifacts
             zip -r csye6225-webapp-${CIRCLE_BUILD_NUM}.zip ./infrastructure/aws/codedeploy/*.sh webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war ./appspec.yml
             pwd
             ls -al
             mv csye6225-webapp-${CIRCLE_BUILD_NUM}.zip artifacts/
             cd artifacts    
-            chmod 777 artifacts
             ls -al 
       - run:
       # Our primary container isn't MYSQL so run a sleep command until it's ready.
