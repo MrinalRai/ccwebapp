@@ -16,10 +16,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install AWS CLI
+          name: Install Package requirements
           command: |
-            sudo apt-get -y -qq install awscli
-            aws --version
+            sudo apt-get update && sudo apt-get install wget zip unzip -y
+            sudo apt-get install -y python3-pip
+            sudo pip3 install awscli
       - run:
           name: Build JAR and Run Unit Tests
           command: |
