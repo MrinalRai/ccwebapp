@@ -1,9 +1,7 @@
 #!/bin/bash
 
 sudo systemctl stop tomcat.service
-
 sudo rm -rf /opt/tomcat/webapps/docs /opt/tomcat/webapps/examples /opt/tomcat/webapps/host-manager /opt/tomcat/webapps/manager /opt/tomcat/webapps/CloudAssisgnment2
-
 sudo chown tomcat:tomcat /opt/tomcat/webapps/Cloud*.war
 
 #clean log files
