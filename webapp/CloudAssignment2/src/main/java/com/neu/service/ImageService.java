@@ -20,6 +20,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.sqs.model.ReceiptHandleIsInvalidException;
 import com.neu.exceptionHandler.ImageException;
@@ -72,14 +73,14 @@ public class ImageService {
     	}
         String fileUrl = "";
         //try {
-        if(!(rec.getImage().equals(null))) {
+        if(multipartFile.getContentType().equals("image/jpeg")||multipartFile.getContentType().equals("image/png")||multipartFile.getContentType().equals("image/jpg")) {
             File file = convertMultiPartToFile(multipartFile);
             String fileName = generateFileName(multipartFile);
             fileUrl = endpointUrl + "/" + bucketName + "/" + fileName;
             uploadFileTos3bucket(fileName, file);
             file.delete();
         }else {
-        	throw new ImageException("Image already present in this recipie");
+        	throw new ImageException("Please upload png/jpg/jpeg image");
         }
 //        } catch (Exception e) {
 //           e.printStackTrace();
@@ -117,8 +118,11 @@ public class ImageService {
 		}if (!user.get().getEmail().equals(auth.getName())) {
             throw new UserNotFoundException("Invalid user credentials");
 		}
+		String imageUrl = im.getUrl();
 		rec.setImage(null);
 		imageRepo.delete(im);
+		String key = imageUrl.substring(65);
+		s3client.deleteObject(new DeleteObjectRequest(bucketName, key));
 	}
 
     private File convertMultiPartToFile(MultipartFile file) throws IOException {
@@ -130,12 +134,17 @@ public class ImageService {
     }
 
     private String generateFileName(MultipartFile multiPart) {
-        return multiPart.getOriginalFilename().replace(" ", "_");
+         return new Date().getTime() + "-" + multiPart.getOriginalFilename().replace(" ", "_");
     }
 
     private void uploadFileTos3bucket(String fileName, File file) {
         s3client.putObject(new PutObjectRequest(bucketName, fileName, file)
                 .withCannedAcl(CannedAccessControlList.PublicRead));
     }
+    
+//    private void deleteFileTos3bucket(String fileName, File file) {
+//        s3client.putObject(new PutObjectRequest(bucketName, fileName, file)
+//                .withCannedAcl(CannedAccessControlList.PublicRead));
+//    }
 
 }

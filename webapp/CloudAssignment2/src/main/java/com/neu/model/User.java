@@ -17,6 +17,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
@@ -36,12 +37,15 @@ public class User{
 	@Column(name = "id", unique = true, nullable = false, columnDefinition = "BINARY(16)")
 	private UUID id;
 
+	@NotNull
     @Column(name = "firstname",nullable=false)
     private String firstname;
 
+	@NotNull
     @Column(name = "lastname",nullable=false)
     private String lastname;
     
+	@NotNull
     @Column(name = "email",nullable=false)
     private String email;
     
