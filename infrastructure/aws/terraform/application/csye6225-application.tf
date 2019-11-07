@@ -246,7 +246,7 @@ resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
   ec2_tag_filter {
     key   = "Name"
     type  = "KEY_AND_VALUE"
-    value = "myEC2Instance"
+    value = "ec2-instance"
   }
   deployment_style {
     deployment_option = "WITHOUT_TRAFFIC_CONTROL"
