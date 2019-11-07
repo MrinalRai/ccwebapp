@@ -66,9 +66,12 @@ public class Recipie {
     @Column(name = "total_time_in_min",updatable= false)
     private int total_time_in_min;
     
+    @NotNull
     @Column(name = "title",nullable=false)
     private String title;
     
+    
+    @NotNull
     @Column(name = "cusine",nullable=false)
     private String cusine;
     

@@ -59,5 +59,10 @@ public class UserService {
 		responseEntity = new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
 		return responseEntity;
 	}
+	
+
+	public Optional<User> findUser(String email) {
+		return userRepo.findUserByEmail(email);
+	}
 
 }

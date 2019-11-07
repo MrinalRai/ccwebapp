@@ -23,8 +23,13 @@ dependencies {
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.2.0.RELEASE'
 	compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.0.pr3'
 	compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.0'
-	// https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk
 	compile group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.11.656'
+	compile group: 'com.timgroup', name: 'java-statsd-client', version: '3.1.0'
+	compile group: 'net.logstash.logback', name: 'logstash-logback-encoder', version: '6.2'
+	compile group: 'ch.qos.logback.contrib', name: 'logback-jackson', version: '0.1.5'
+	
+	
+	
 		
 	
 	testCompile group: 'org.springframework.security', name: 'spring-security-test', version: '5.1.6.RELEASE'
