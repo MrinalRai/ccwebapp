@@ -14,86 +14,114 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.neu.exceptionHandler.ImageException;
-import com.neu.exceptionHandler.RecipieValidationException;
 import com.neu.model.Image;
-import com.neu.model.Recipie;
 import com.neu.service.ImageService;
+import com.timgroup.statsd.StatsDClient;
 
 @RestController
 @RequestMapping("/v1/recipie/{id}/image")
 public class ImageController {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ImageController.class);
+	private final static Class<ImageController> className = ImageController.class;
 	
-    private ImageService imageService;
-
-    @Autowired
-    ImageController(ImageService imageService) {
-        this.imageService = imageService;
-    }
-
+	@Autowired
+	private ImageService imageService;
+	
+	@Autowired
+	private StatsDClient statsDClient;
+	
+	private long startTime;
+	private long endTime;
     
 	@PostMapping("")
 	public ResponseEntity<Object> uploadImage(@RequestPart(value = "image") MultipartFile file, Authentication auth, @PathVariable UUID id) throws Exception {
 		
-		logger.info("Inside post /image mapping");
+		startTime = System.currentTimeMillis();
+		ResponseEntity<Object> o;
+		logger.info(">>> POST /v1/recipie/{id}/image mapping >>> Class "+className);
+		statsDClient.incrementCounter("endpoint.image.http.POST");
 
 		HashMap<String, Object> entities = new HashMap<String, Object>();
 		Image i = imageService.uploadFile(file, auth, id);
 		try {
 		if(i!=null) {
 			entities.put("image", i);
-			return new ResponseEntity<>(entities.get("image"), HttpStatus.CREATED);
+			logger.info("<<< POST /v1/recipie/{id}/image mapping SUCCESSFUL >>> Class "+className);
+			o = new ResponseEntity<>(entities.get("image"), HttpStatus.CREATED);
 		}else {
 			entities.put("message", "File not uploaded");
-			return new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
+			logger.error("<<< POST /v1/recipie/{id}/image mapping UNSUCCESSFUL (No file uploaded) >>> Class "+className);
+			o = new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
 		}
 		}catch(Exception e) {
 			entities.put("message","Image already present in recipie");
-			return new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
+			logger.error("<<< POST /v1/recipie/{id}/image mapping UNSUCCESSFUL ( "+ e.getMessage() +" )>>> Class "+className);
+			o= new ResponseEntity<>(entities, HttpStatus.BAD_REQUEST);
 		}
+		endTime = System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.image.http.POST", (endTime-startTime));
+		return o;
 	}
 	
 	@DeleteMapping("/{imageId}")
 	public ResponseEntity<Object> deleteRecipie(@PathVariable UUID id, @PathVariable UUID imageId, Authentication auth) throws Exception{
 
-		logger.info("Inside Image delete mapping");
+		startTime = System.currentTimeMillis();
+		ResponseEntity<Object> o;
+		logger.info(">>> DELETE /v1/recipie/{id}/image/{imageId} mapping >>> Class "+className);
+		statsDClient.incrementCounter("endpoint.image.http.DELETE");
+		
 		HashMap<String, Object> entities = new HashMap<String, Object>();
 		try {
 			imageService.delete(id, imageId, auth);
 			entities.put("Deleted", "Image was successfuly deleted");
-			return new ResponseEntity<>(entities, HttpStatus.NO_CONTENT);
+			logger.info("<<< DELETE /v1/recipie/{id}/image/{imageId} mapping SUCCESSFUL >>> Class "+className);
+			o= new ResponseEntity<>(entities, HttpStatus.NO_CONTENT);
 		
 		}catch(Exception e) {
 			entities.put("message", e.getMessage());
-			return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
+			logger.error("<<< DELETE /v1/recipie/{id}/image/{imageId} mapping UNSUCCESSFUL ( "+ e.getMessage() +" )>>> Class "+className);
+			o= new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
 		}
+		endTime = System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.image.http.DELETE", (endTime-startTime));
+		return o;
 	}
 	
 	@GetMapping("/{imageId}")
 	public ResponseEntity<Object> getBookById(@PathVariable UUID id, @PathVariable UUID imageId) throws Exception{
-		logger.info("Inside /Image/{id} GET mapping");
+
+		startTime = System.currentTimeMillis();
+		ResponseEntity<Object> o;
+		logger.info(">>> GET /v1/recipie/{id}/image/{imageId} mapping >>> Class "+className);
+		statsDClient.incrementCounter("endpoint.image.http.GET");
+		
 		HashMap<String, Object> entities = new HashMap<String, Object>();
 		try {
 		Optional<Image> im = imageService.getImage(id, imageId);
 		if (null == im) {
 			entities.put("message", "Recipie does not exists");
-			return new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
+			logger.error("<<< GET /v1/recipie/{id}/image/{imageId} mapping UNSUCCESSFUL (Recipie ID wrong) >>> Class "+className);
+			o= new ResponseEntity<>(entities, HttpStatus.NOT_FOUND);
 		}else {
 			entities.put("image:",im);
-			return new ResponseEntity<>(entities,HttpStatus.OK);
+			logger.info("<<< GET /v1/recipie/{id}/image/{imageId} mapping SUCCESSFUL >>> Class "+className);
+			o= new ResponseEntity<>(entities,HttpStatus.OK);
 		}	
 		}catch(Exception e) {
 			entities.put("message",e.getMessage());
-			return new ResponseEntity<>(entities,HttpStatus.BAD_REQUEST);
+			logger.error("<<< GET /v1/recipie/{id}/image/{imageId} mapping UNSUCCESSFUL ( "+ e.getMessage() +" )>>> Class "+className);
+			o= new ResponseEntity<>(entities,HttpStatus.BAD_REQUEST);
 		}
+		endTime = System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.image.http.GET", (endTime-startTime));
+		return o;
 		
 	}
 
