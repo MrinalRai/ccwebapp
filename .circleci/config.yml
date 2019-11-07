@@ -28,7 +28,7 @@ jobs:
           command: |
             mkdir artifacts
             chmod 777 artifacts
-            zip -r csye6225-webapp-${CIRCLE_BUILD_NUM}.zip ./infrastructure/aws/codedeploy/*.sh webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war ./infrastructure/aws/appspec.yml
+            zip -r csye6225-webapp-${CIRCLE_BUILD_NUM}.zip webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war *.sh *.yml *.json
             pwd
             ls -al
             mv csye6225-webapp-${CIRCLE_BUILD_NUM}.zip artifacts/
@@ -42,5 +42,5 @@ jobs:
           command: aws deploy create-deployment --application-name csye6225-webapp --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name csye6225-webapp-deployment --description "CSYE6225 - Codedeploy" --region=${AWS_REGION} --s3-location bucket=codedeploy.${DOMAIN_NAME},bundleType=zip,key=csye6225-webapp-${CIRCLE_BUILD_NUM}.zip
       - run:
           name: Configure cloudwatch
-          command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
+          command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/home/centos/cloudwatch-config.json -s
       

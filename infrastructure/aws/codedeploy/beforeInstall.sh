@@ -3,6 +3,7 @@
 cd ~
 if [ -f "*.jar" ]
 then
+sudo rm -rf /*.jar
 sudo rm -rf /opt/tomcat/*.jar
 sudo rm -rf /opt/tomcat/*.war
 sudo rm -rf /home/centos/csye6225.log

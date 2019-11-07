@@ -3,9 +3,9 @@ os: linux
 
 files:
   - source: ./build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war
-    destination: /opt/tomcat7/webapps
-  - source: ./infrastructure/aws/cloudwatch-config.json
-    destination: /opt
+    destination: /home/centos
+  - source: ./cloudwatch-config.json
+    destination: /home/centos
 
 hooks:
   ApplicationStop:
