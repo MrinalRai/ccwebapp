@@ -1,5 +1,8 @@
 data "aws_availability_zones" "available" {}
-
+provider "aws" {
+  region = "${var.region}"
+  profile="${var.profile}"
+}
 resource "aws_vpc" "vpc_tf" {
 	cidr_block = "${var.VPC_ciderBlock}"
 	instance_tenancy     = "default"
@@ -13,7 +16,7 @@ resource "aws_vpc" "vpc_tf" {
 }
 
 resource "aws_subnet" "subnet_tf" {
-	count = 1
+	count = 3
 	availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
 	cidr_block = "10.0.${count.index}.0/24"
 	vpc_id = "${aws_vpc.vpc_tf.id}"
@@ -23,6 +26,14 @@ resource "aws_subnet" "subnet_tf" {
     )
   }"
 }
+resource "aws_db_subnet_group" "dbSubnetGroup" {
+  name       = "main"
+  subnet_ids = ["${aws_subnet.subnet_tf[1].id}", "${aws_subnet.subnet_tf[2].id}"]
+  tags = {
+    Name = "My DB subnet group"
+  }
+}
+
 
 resource "aws_internet_gateway" "ig_tf" {
 	vpc_id = "${aws_vpc.vpc_tf.id}"
@@ -42,7 +53,7 @@ resource "aws_route_table" "rt_tf" {
 }
 
 resource "aws_route_table_association" "rtAsso_tf" {
-	count = 1
+	count = 3
 	subnet_id = "${aws_subnet.subnet_tf.*.id[count.index]}"
 	route_table_id = "${aws_route_table.rt_tf.id}"
 }
@@ -56,16 +67,30 @@ resource "aws_instance" "ec2-instance" {
 	instance_type = "${var.instance_type}"
 	key_name = "${var.ami_key_pair_name}"
 	security_groups = ["${aws_security_group.application.id}"]
-	subnet_id = "${aws_subnet.subnet_tf.*.id[count.index]}"
+	subnet_id = "${aws_subnet.subnet_tf[0].id}"
 	disable_api_termination = "false"
 	root_block_device {
 		volume_size = "${var.volume_size}"
 		volume_type = "${var.volume_type}"
 	}
+	tags = {
+    Name = "myEC2Instance"
+  }
 	depends_on = [
     		aws_db_instance.RDS,
   	]
 	iam_instance_profile = "${aws_iam_instance_profile.test_profile.name}"
+	
+	user_data = <<EOF
+	#!/bin/bash
+	cd /home/centos
+    echo "export DB_USER=root" >> .bashrc
+	echo "export DB_PASSWORD=Admit$18" >> .bashrc
+    echo "export DB_DATABASE_NAME=cloudDb" >> .bashrc
+    echo "export DB_PORT=3306" >> .bashrc
+    echo "export DB_HOST_NAME=${aws_db_instance.RDS.name}" >> .bashrc
+	echo "export S3_BUCKET=${aws_s3_bucket.bucket.bucket}" >> .bashrc
+	EOF
 }
 #Security group for EC2 instance created
 resource "aws_security_group" "application" {
@@ -105,7 +130,6 @@ resource "aws_security_group" "application" {
 }
 #Creating RDS instances
 resource "aws_db_instance" "RDS"{
-	count = 1
 	name = "csye6225"
 	allocated_storage = 20
 	engine = "mysql"
@@ -116,12 +140,11 @@ resource "aws_db_instance" "RDS"{
 	port = "3306"
 	username = "root"
 	password = "Admit$18"
-	#db_subnet_group_name = "${aws_subnet.subnet_tf.*.id[count.index]}"
 	publicly_accessible = "true"
 	skip_final_snapshot = "true"
-	#final_snapshot_identifier = "${aws_db_instance.RDS.*.id[count.index]}-final-snapshot"
+	vpc_security_group_ids = ["${aws_security_group.database.id}"]
+	db_subnet_group_name = "${aws_db_subnet_group.dbSubnetGroup.name}"
 }
-
 #creating database security group
 resource "aws_security_group" "database" {
   name        = "Database Security Group"
@@ -146,7 +169,6 @@ resource "aws_security_group_rule" "egress-database-rule" {
     security_group_id = "${aws_security_group.database.id}"
     source_security_group_id  = "${aws_security_group.application.id}"
 }
-
 resource "aws_eip" "ip-test-env" {
 	count = 1
 	instance = "${aws_instance.ec2-instance.*.id[count.index]}"
@@ -278,7 +300,8 @@ resource "aws_iam_role" "codedeploysrv" {
       "Action": "sts:AssumeRole",
       "Principal":
         {"Service": "codedeploy.amazonaws.com"},
-      "Effect": "Allow"
+      "Effect": "Allow",
+	  "Sid": ""
     }
   ]
 }
@@ -299,10 +322,7 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
   "Statement": [
     {
       "Action": [
-        "s3:Get*",
-        "s3:List*",
-		"s3:DeleteBucket",
-		"s3:DeleteObject*"
+        "s3:*"
 	  ],
       "Effect": "Allow",
       "Resource": "${aws_s3_bucket.bucket.arn}"
@@ -432,22 +452,26 @@ resource "aws_iam_role" "ec2CodplyRole" {
       "Action": "sts:AssumeRole",
       "Principal":
         {"Service": "ec2.amazonaws.com"},
-      "Effect": "Allow"
+      "Effect": "Allow",
+	   "Sid": ""
     }
   ]
 }
 EOF
 }
 
-
 resource "aws_iam_instance_profile" "test_profile" {
   name = "test_profile"
   role = "${aws_iam_role.ec2CodplyRole.name}"
 }
 
-resource "aws_iam_role_policy_attachment" "test-attach-role-policy" {
-role      = "${aws_iam_role.ec2CodplyRole.name}"
-policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
+resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach" {
+  role       = "${aws_iam_role.ec2CodplyRole.name}"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach2" {
+  role       = "${aws_iam_role.ec2CodplyRole.name}"
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 resource "aws_iam_user_policy_attachment" "test-attach1" {

@@ -13,20 +13,20 @@ variable "VPC_ciderBlock"{
 variable "ami_name" {
 description = "AMI Name to be used for EC2 Security group creation"
   type    = "string"
-  default = "csye6225_1573077795" 
+  default = "csye6225_1573145192" 
 }
 
 variable "ami_id" {
 description = "AMI Id to be used for EC2 Security group creation"
   type    = "string"
-    default="ami-02bf05d8f5eaee63b"
+    default="ami-00daaf0c8180b0762"
 
 }
 
 variable "ami_key_pair_name" {
 description = "AMI Key-Pair Name to be used for EC2 Security group creation"
   type    = "string"
-    default="csye6225_key"
+    default="test_rsa"
 
 }
 
@@ -61,4 +61,8 @@ variable "account_id"{
 variable "region"{
   type    = "string"
   default="us-east-1"
+}
+variable "profile" {
+  type= "string"
+  default = "devuser"
 }
