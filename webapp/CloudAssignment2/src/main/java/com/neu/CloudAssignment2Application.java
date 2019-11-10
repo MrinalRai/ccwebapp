@@ -34,7 +34,7 @@ public class CloudAssignment2Application extends SpringBootServletInitializer{
             {
                     log.info("Started CloudAssignment2Application successfully!");
 
-                   // throw new NullPointerException("Oh no!");
+                  
             }
             catch (Exception e)
             {
