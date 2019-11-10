@@ -1,14 +1,11 @@
 package com.neu.CloudAssignment2;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.Optional;
 
 import javax.sql.DataSource;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,14 +21,11 @@ import com.neu.service.ImageService;
 import com.neu.service.RecipieService;
 import com.neu.service.UserService;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebMvcTest(RecipieController.class)
 public class ApplicationTest {
-	
-	@Autowired
-	private MockMvc mockMvc;
 	
 	@MockBean
 	private UserService userService;
