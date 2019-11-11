@@ -29,7 +29,8 @@ jobs:
             zip -r csye6225-webapp-${CIRCLE_BUILD_NUM}.zip webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war /infrastructure/aws/codedeploy/*.sh *.yml *.json
             pwd
             ls -al
-            mv csye6225-webapp-${CIRCLE_BUILD_NUM}.zip artifacts/
+            chmod 777 csye6225-webapp-${CIRCLE_BUILD_NUM}.zip
+            sudo mv csye6225-webapp-${CIRCLE_BUILD_NUM}.zip artifacts/
             cd artifacts    
             ls -al 
       - run:

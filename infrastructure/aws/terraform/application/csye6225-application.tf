@@ -321,7 +321,9 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
   "Statement": [
     {
       "Action": [
-        "s3:*"
+        "s3:*",
+		"s3:Get*",
+        "s3:List*"
 	  ],
       "Effect": "Allow",
       "Resource": "${aws_s3_bucket.bucket.arn}"
@@ -463,7 +465,10 @@ resource "aws_iam_instance_profile" "test_profile" {
   name = "test_profile"
   role = "${aws_iam_role.ec2CodplyRole.name}"
 }
-
+resource "aws_iam_role_policy_attachment" "attach-codedeploysrv-policy" {
+role      = "${aws_iam_role.ec2CodplyRole.name}"
+policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployFullAccess"
+}
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
   policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
