@@ -22,6 +22,7 @@ jobs:
             rm -rf build
             chmod +x gradlew
             ./gradlew clean build
+            
       - run:
           name: Build Deployment Artifacts
           command: |

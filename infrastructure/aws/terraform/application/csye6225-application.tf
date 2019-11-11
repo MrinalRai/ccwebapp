@@ -1,10 +1,8 @@
 data "aws_availability_zones" "available" {}
-
 provider "aws" {
   region = "${var.region}"
   profile="${var.profile}"
 }
-
 resource "aws_vpc" "vpc_tf" {
 	cidr_block = "${var.VPC_ciderBlock}"
 	instance_tenancy     = "default"
@@ -29,7 +27,7 @@ resource "aws_subnet" "subnet_tf" {
   }"
 }
 resource "aws_db_subnet_group" "dbSubnetGroup" {
-  name       = "subnetgroup"
+  name       = "main1"
   subnet_ids = ["${aws_subnet.subnet_tf[1].id}", "${aws_subnet.subnet_tf[2].id}"]
   tags = {
     Name = "My DB subnet group"
@@ -237,7 +235,6 @@ resource "aws_s3_bucket" "bucket_image" {
 			storage_class = "STANDARD_IA"
 		}
 	}
- 
 }
 
 # Creating DynamoDB table
@@ -288,7 +285,7 @@ resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
   }
   }
 
-# Creating all the IAM policies 
+# Creating IAM policies 
 # Read instance from S3 Bucket
 resource "aws_iam_role" "codedeploysrv" {
   name = "CodeDeployServiceRole"
@@ -351,7 +348,6 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3" {
 }
 EOF
 }
-
 resource "aws_iam_policy" "CircleCI-Code-Deploy" {
   name        = "CircleCI-Code-Deploy"
   path        = "/"
@@ -464,13 +460,13 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "test_profile" {
-  name = "dev1_profile"
+  name = "test_profile"
   role = "${aws_iam_role.ec2CodplyRole.name}"
 }
 
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
 }
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach2" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
@@ -493,7 +489,3 @@ resource "aws_iam_user_policy_attachment" "test-attach4" {
 user      = "circleci"
 policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
 }
-
-
-
-

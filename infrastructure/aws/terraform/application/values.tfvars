@@ -9,3 +9,5 @@ region="us-east-1"
 vpc-cluster-name="app_deploy"
 profile="dev"
 account_id="227417268421"
+VPC_ciderBlock="10.0.0.0/16"
+
