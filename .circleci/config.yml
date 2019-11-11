@@ -37,6 +37,9 @@ jobs:
             cd artifacts    
             ls -al 
       - run:
+          name: Checking AWS cli credentials
+          command: aws configure list
+      - run:
           name: Upload ZIP to S3 bucket
           command: aws s3 cp artifacts/csye6225-webapp-${CIRCLE_BUILD_NUM}.zip s3://${CODEDEPLOY_S3BUCKET}/csye6225-webapp-${CIRCLE_BUILD_NUM}.zip
       - run:
