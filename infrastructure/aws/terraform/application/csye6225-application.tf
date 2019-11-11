@@ -1,8 +1,10 @@
 data "aws_availability_zones" "available" {}
+
 provider "aws" {
   region = "${var.region}"
   profile="${var.profile}"
 }
+
 resource "aws_vpc" "vpc_tf" {
 	cidr_block = "${var.VPC_ciderBlock}"
 	instance_tenancy     = "default"
@@ -27,7 +29,7 @@ resource "aws_subnet" "subnet_tf" {
   }"
 }
 resource "aws_db_subnet_group" "dbSubnetGroup" {
-  name       = "main"
+  name       = "subnetgroup"
   subnet_ids = ["${aws_subnet.subnet_tf[1].id}", "${aws_subnet.subnet_tf[2].id}"]
   tags = {
     Name = "My DB subnet group"
@@ -349,6 +351,7 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3" {
 }
 EOF
 }
+
 resource "aws_iam_policy" "CircleCI-Code-Deploy" {
   name        = "CircleCI-Code-Deploy"
   path        = "/"
@@ -461,7 +464,7 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "test_profile" {
-  name = "dev_profile"
+  name = "dev1_profile"
   role = "${aws_iam_role.ec2CodplyRole.name}"
 }
 
