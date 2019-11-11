@@ -465,10 +465,14 @@ resource "aws_iam_instance_profile" "test_profile" {
   name = "test_profile"
   role = "${aws_iam_role.ec2CodplyRole.name}"
 }
-resource "aws_iam_role_policy_attachment" "attach-codedeploysrv-policy" {
+/*resource "aws_iam_role_policy_attachment" "attach-codedeploysrv-policy" {
+role      = "${aws_iam_role.codedeploysrv.name}"
+policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
+}
+resource "aws_iam_role_policy_attachment" "attach-codedeploysrv-policy1" {
 role      = "${aws_iam_role.ec2CodplyRole.name}"
 policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployFullAccess"
-}
+}*/
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
   policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
@@ -477,7 +481,6 @@ resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach2" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
-
 resource "aws_iam_user_policy_attachment" "test-attach1" {
 user      = "circleci"
 policy_arn = "${aws_iam_policy.circleci-ec2-ami.arn}"
