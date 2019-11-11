@@ -235,7 +235,6 @@ resource "aws_s3_bucket" "bucket_image" {
 			storage_class = "STANDARD_IA"
 		}
 	}
- 
 }
 
 # Creating DynamoDB table
@@ -467,7 +466,7 @@ resource "aws_iam_instance_profile" "test_profile" {
 
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.name}"
 }
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach2" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
