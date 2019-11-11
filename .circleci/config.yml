@@ -18,6 +18,8 @@ jobs:
       - run:
           name: Build WAR
           command: |
+            pwd
+            ls -al
             cd webapp/CloudAssignment2
             rm -rf build
             chmod +x gradlew

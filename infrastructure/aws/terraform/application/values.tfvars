@@ -1,6 +1,6 @@
 domain-name="dev.csye6225mrinal.me"
-ami_id="ami-0d328c8bca8b30ee8"
-ami_name="csye6225_1573486640"
+ami_id="ami-0cf8ceee44e6883bd"
+ami_name="csye6225_1573507891"
 ami_key_pair_name="csye6225_ssh"
 instance_type="t2.micro"
 volume_size="20"

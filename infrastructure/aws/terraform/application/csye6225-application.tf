@@ -27,7 +27,7 @@ resource "aws_subnet" "subnet_tf" {
   }"
 }
 resource "aws_db_subnet_group" "dbSubnetGroup" {
-  name       = "main1"
+  name       = "main2"
   subnet_ids = ["${aws_subnet.subnet_tf[1].id}", "${aws_subnet.subnet_tf[2].id}"]
   tags = {
     Name = "My DB subnet group"
