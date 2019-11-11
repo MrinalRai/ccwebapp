@@ -466,7 +466,7 @@ resource "aws_iam_instance_profile" "test_profile" {
 
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
-  policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.name}"
+  policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
 }
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach2" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
