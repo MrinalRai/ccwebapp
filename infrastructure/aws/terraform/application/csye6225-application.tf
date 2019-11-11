@@ -288,7 +288,7 @@ resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
   }
   }
 
-# Creating IAM policies 
+# Creating all the IAM policies 
 # Read instance from S3 Bucket
 resource "aws_iam_role" "codedeploysrv" {
   name = "CodeDeployServiceRole"
