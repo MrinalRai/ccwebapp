@@ -175,10 +175,10 @@ resource "aws_eip" "ip-test-env" {
 	vpc = true
 }
 #Creating key for S3 encryption
-resource "aws_kms_key" "key" {
-	description = "This key is used to encrypt bucket objects"
-	deletion_window_in_days = 10
-}
+#resource "aws_kms_key" "key" {
+#	description = "This key is used to encrypt bucket objects"
+#	deletion_window_in_days = 10
+#}
 #Creating S3 Buckets
 resource "aws_s3_bucket" "bucket" {
 	bucket = "codedeploy.${var.domain-name}"
@@ -192,7 +192,6 @@ resource "aws_s3_bucket" "bucket" {
 	server_side_encryption_configuration {
     		rule {
 			apply_server_side_encryption_by_default {
-				kms_master_key_id = "${aws_kms_key.key.arn}"
 				sse_algorithm = "aws:kms" 
 			}
       		}
@@ -222,7 +221,6 @@ resource "aws_s3_bucket" "bucket_image" {
 	server_side_encryption_configuration {
     		rule {
 			apply_server_side_encryption_by_default {
-				kms_master_key_id = "${aws_kms_key.key.arn}"
 				sse_algorithm = "aws:kms" 
 			}
       		}
@@ -286,9 +284,10 @@ resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
   }
 
 # Creating IAM policies 
-# Read instance from S3 Bucket
-resource "aws_iam_role" "codedeploysrv" {
-  name = "CodeDeployServiceRole"
+# Read deployed code from S3 Bucket
+#		CODE DEPLOY SERVICE SROLE
+resource "aws_iam_role" "codedeploysrv" {       
+  name = "c"
   path = "/"
   force_detach_policies = "true"
   assume_role_policy = <<EOF
@@ -306,11 +305,11 @@ resource "aws_iam_role" "codedeploysrv" {
 }
 EOF
 }
-
 resource "aws_iam_role_policy_attachment" "test-attach-codedeploysrv-policy" {
 role      = "${aws_iam_role.codedeploysrv.name}"
 policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
+
 resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
   name        = "CodeDeploy-EC2_S3"
   path        = "/"
@@ -321,9 +320,7 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
   "Statement": [
     {
       "Action": [
-        "s3:*",
-		"s3:Get*",
-        "s3:List*"
+        "s3:*"
 	  ],
       "Effect": "Allow",
       "Resource": "${aws_s3_bucket.bucket.arn}"
@@ -441,8 +438,9 @@ resource "aws_iam_policy" "circleci-ec2-ami" {
 }
 EOF
 }
+#		EC2 CODE DEPLOY ROLE
 resource "aws_iam_role" "ec2CodplyRole" {
-  name = "CodeDeployEC2ServiceRole"
+  name = "CodeDeployEC2Service"
   path = "/"
   force_detach_policies = "true"
   assume_role_policy = <<EOF
@@ -460,19 +458,11 @@ resource "aws_iam_role" "ec2CodplyRole" {
 }
 EOF
 }
-
-resource "aws_iam_instance_profile" "test_profile" {
-  name = "test_profile"
-  role = "${aws_iam_role.ec2CodplyRole.name}"
-}
-/*resource "aws_iam_role_policy_attachment" "attach-codedeploysrv-policy" {
+resource "aws_iam_role_policy_attachment" "attach-codedeploysrv-policy" {
 role      = "${aws_iam_role.codedeploysrv.name}"
 policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
-resource "aws_iam_role_policy_attachment" "attach-codedeploysrv-policy1" {
-role      = "${aws_iam_role.ec2CodplyRole.name}"
-policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployFullAccess"
-}*/
+
 resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach" {
   role       = "${aws_iam_role.ec2CodplyRole.name}"
   policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
@@ -496,6 +486,10 @@ policy_arn = "${aws_iam_policy.CircleCI-Upload-To-S3.arn}"
 resource "aws_iam_user_policy_attachment" "test-attach4" {
 user      = "circleci"
 policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
+}
+resource "aws_iam_instance_profile" "test_profile" {
+  name = "test_profile"
+  role = "${aws_iam_role.ec2CodplyRole.name}"
 }
 
 
