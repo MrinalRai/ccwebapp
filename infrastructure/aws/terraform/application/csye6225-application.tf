@@ -311,6 +311,7 @@ resource "aws_iam_role_policy_attachment" "test-attach-codedeploysrv-policy" {
 role      = "${aws_iam_role.codedeploysrv.name}"
 policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
+
 resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
   name        = "CodeDeploy-EC2_S3"
   path        = "/"
@@ -324,7 +325,10 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
         "s3:*"
 	  ],
       "Effect": "Allow",
-      "Resource": "${aws_s3_bucket.bucket.arn}"
+      "Resource": [
+		  "${aws_s3_bucket.bucket.arn}"
+		  "${aws_s3_bucket.bucket.arn/*}"
+		  ]
     }
   ]
 }
