@@ -330,6 +330,7 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
 }
 EOF
 }
+
 resource "aws_iam_policy" "CircleCI-Upload-To-S3" {
   name        = "CircleCI-Upload-To-S3"
   path        = "/"
@@ -342,7 +343,11 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3" {
                 "s3:PutObject"
             ],
 			"Effect": "Allow",
-            "Resource": "${aws_s3_bucket.bucket.arn}"
+            "Resource": "${aws_s3_bucket.bucket.arn}",
+			"Principal": {
+                "AWS": [
+                    "*"
+                ]
         }
     ]
 }
