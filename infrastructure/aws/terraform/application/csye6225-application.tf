@@ -94,9 +94,9 @@ resource "aws_instance" "ec2-instance" {
 	echo "set S3_BUCKET=${aws_s3_bucket.bucket.bucket}" >> setenv.sh
 	echo "set sql=mysql -h $DB_HOST_NAME -P $DB_PORT -u $DB_USER -p $DB_PASSWORD" >> setenv.sh
 	echo "#mysql_secure_installation" >> setenv.sh
-	echo "export sql" >> setenv.sh
-	echo "set sql2=DROP DATABASE IF EXISTS cloudDb;" >> setenv.sh
-	echo "export sql2" >> setenv.sh
+	echo "exec sql" >> setenv.sh
+	echo "set sql2=CREATE DATABASE IF NOT EXISTS cloudDb;" >> setenv.sh
+	echo "exec sql2" >> setenv.sh
 	cd ~
 	EOF
 }
