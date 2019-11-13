@@ -1,6 +1,6 @@
 domain-name="dev.vidushigarg.me"
-ami_id="ami-00daaf0c8180b0762"
-ami_name="csye6225_1573145192"
+ami_id="ami-03ffa0f62d0493f60"
+ami_name="csye6225_1573599846"
 ami_key_pair_name="csye6225_key"
 instance_type="t2.micro"
 volume_size="20"
