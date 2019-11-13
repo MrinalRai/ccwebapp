@@ -175,10 +175,7 @@ resource "aws_eip" "ip-test-env" {
 	vpc = true
 }
 #Creating key for S3 encryption
-resource "aws_kms_key" "key" {
-	description = "This key is used to encrypt bucket objects"
-	deletion_window_in_days = 10
-}
+
 #Creating S3 Bucket for codedeploy
 resource "aws_s3_bucket" "bucket" {
 	bucket = "codedeploy.${var.domain-name}"
@@ -189,14 +186,6 @@ resource "aws_s3_bucket" "bucket" {
      		"Name", "${var.domain-name}",
     		)
   	}"
-	server_side_encryption_configuration {
-    		rule {
-			apply_server_side_encryption_by_default {
-				kms_master_key_id = "${aws_kms_key.key.arn}"
-				sse_algorithm = "aws:kms" 
-			}
-      		}
-    	}
 	lifecycle_rule {
 	    id      = "log/"
 	    enabled = true
@@ -222,7 +211,6 @@ resource "aws_s3_bucket" "bucket_image" {
 	server_side_encryption_configuration {
     		rule {
 			apply_server_side_encryption_by_default {
-				kms_master_key_id = "${aws_kms_key.key.arn}"
 				sse_algorithm = "aws:kms" 
 			}
       		}
