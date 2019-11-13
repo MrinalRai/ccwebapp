@@ -1,2 +1,4 @@
 #!/bin/bash
-sudo systemctl start tomcat.service
+sudo systemctl daemon-reload
+sudo systemctl enable tomcat
+sudo systemctl restart tomcat.service
