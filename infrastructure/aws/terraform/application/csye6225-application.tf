@@ -75,31 +75,21 @@ resource "aws_instance" "ec2-instance" {
 	}
 	tags = {
     Name = "myEC2Instance"
-  }
+  	}
 	depends_on = [
-    		aws_db_instance.RDS,
-  	]
+    	aws_db_instance.RDS,]
 	iam_instance_profile = "${aws_iam_instance_profile.test_profile.name}"
-	
-	user_data = <<EOF
-	#!/bin/bash
-	sudo chmod 777 /opt/tomcat/bin/
-	cd /opt/tomcat/bin/
-	sudo touch setenv.sh
-    	echo "set DB_USER=root" >> setenv.sh
-	echo "set DB_PASSWORD=Admit$18" >> setenv.sh
-	echo "set DB_DATABASE_NAME=cloudDb" >> setenv.sh
-	echo "set DB_PORT=3306" >> setenv.sh
-	echo "set DB_HOST_NAME=${aws_db_instance.RDS.endpoint}" >> setenv.sh
-	echo "set S3_BUCKET=${aws_s3_bucket.bucket.bucket}" >> setenv.sh
-	echo "set sql=mysql -h $DB_HOST_NAME -P $DB_PORT -u $DB_USER -p $DB_PASSWORD" >> setenv.sh
-	echo "#mysql_secure_installation" >> setenv.sh
-	echo "exec sql" >> setenv.sh
-	echo "set sql2=CREATE DATABASE IF NOT EXISTS cloudDb;" >> setenv.sh
-	echo "exec sql2" >> setenv.sh
-	cd ~
-	EOF
-}
+	user_data = "${templatefile("userdata.sh",
+		{
+			s3_bucket_name = "${aws_s3_bucket.bucket.bucket}",
+			aws_db_endpoint = "${aws_db_instance.RDS.endpoint}",
+			aws_db_name = "${aws_db_instance.RDS.name}",
+			aws_db_username = "${aws_db_instance.RDS.username}",
+			aws_db_password = "${aws_db_instance.RDS.password}",
+			aws_region = "${var.region}",
+			aws_profile = "${var.profile}"
+		})}"
+	}
 #Security group for EC2 instance created
 resource "aws_security_group" "application" {
 	name = "Application security group"
