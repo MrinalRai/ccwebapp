@@ -19,6 +19,7 @@ AWS Cloud Infrastructure with -
 - S3
 - RDS
 - EC2
+- DynamoDB
 
 ## Build Instructions
 ## Deploy Instructions

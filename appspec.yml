@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 
 files:
-  - source: ./webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war
+  - source: /webapp/CloudAssignment2/build/libs/CloudAssignment2-0.0.1-SNAPSHOT.war
     destination: /home/centos
   - source: infrastructure/aws/codedeploy/cloudwatch-config.json
     destination: /home/centos
