@@ -83,13 +83,21 @@ resource "aws_instance" "ec2-instance" {
 	
 	user_data = <<EOF
 	#!/bin/bash
-	cd /home/centos
-    echo "export DB_USER=root" >> .bashrc
-	echo "export DB_PASSWORD=Admit$18" >> .bashrc
-    echo "export DB_DATABASE_NAME=cloudDb" >> .bashrc
-    echo "export DB_PORT=3306" >> .bashrc
-    echo "export DB_HOST_NAME=${aws_db_instance.RDS.name}" >> .bashrc
-	echo "export S3_BUCKET=${aws_s3_bucket.bucket.bucket}" >> .bashrc
+	sudo chmod 777 /opt/tomcat/bin/
+	cd /opt/tomcat/bin/
+	sudo touch setenv.sh
+    	echo "set DB_USER=root" >> setenv.sh
+	echo "set DB_PASSWORD=Admit$18" >> setenv.sh
+	echo "set DB_DATABASE_NAME=cloudDb" >> setenv.sh
+	echo "set DB_PORT=3306" >> setenv.sh
+	echo "set DB_HOST_NAME=${aws_db_instance.RDS.endpoint}" >> setenv.sh
+	echo "set S3_BUCKET=${aws_s3_bucket.bucket.bucket}" >> setenv.sh
+	echo "set sql=mysql -h $DB_HOST_NAME -P $DB_PORT -u $DB_USER -p $DB_PASSWORD" >> setenv.sh
+	echo "#mysql_secure_installation" >> setenv.sh
+	echo "export sql" >> setenv.sh
+	echo "set sql2=DROP DATABASE IF EXISTS cloudDb;" >> setenv.sh
+	echo "export sql2" >> setenv.sh
+	cd ~
 	EOF
 }
 #Security group for EC2 instance created

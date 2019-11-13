@@ -9,8 +9,8 @@ sudo rm -rf /opt/tomcat/logs/catalina*
 sudo rm -rf /opt/tomcat/logs/*.log
 sudo rm -rf /opt/tomcat/logs/*.txt
 
-cd /
-sudo cp /home/centos/vars.sh .
+
+sudo cp /home/centos/vars.sh /opt/tomcat/webapps/.
 sudo cp /home/centos/*-SNAPSHOT.jar .
 sudo chmod +x ./vars.sh
 sudo ./vars.sh >> /home/centos/csye6225.log 2>&1 &
