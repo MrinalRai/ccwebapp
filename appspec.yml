@@ -9,18 +9,18 @@ files:
 
 hooks:
   ApplicationStop:
-   - location: ./infrastructure/aws/codedeploy/appStop.sh
+   - location: infrastructure/aws/codedeploy/appStop.sh
      timeout: 180
      runas: centos
   BeforeInstall:
-   - location: ./infrastructure/aws/codedeploy/beforeInstall.sh
+   - location: infrastructure/aws/codedeploy/beforeInstall.sh
      timeout: 180
      runas: centos
   AfterInstall:
-   - location: ./infrastructure/aws/codedeploy/afterInstall.sh
+   - location: infrastructure/aws/codedeploy/afterInstall.sh
      timeout: 180
      runas: centos
   ApplicationStart:
-   - location: ./infrastructure/aws/codedeploy/appStart.sh
+   - location: infrastructure/aws/codedeploy/appStart.sh
      timeout: 180
      runas: centos
