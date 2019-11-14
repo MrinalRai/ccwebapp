@@ -1,4 +1,5 @@
 HELP.md
+bin
 .gradle
 /build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -33,7 +34,12 @@ out/
 .vscode/
 /ami-vars.json
 *.log
-*.war
+*.tfvars
 *.terraform
 *.tfstate
 *.tfstate.backup
+
+# Package Files #
+*.jar
+*.war
+*.ear
