@@ -25,7 +25,7 @@ import com.neu.service.RecipieService;
 import com.timgroup.statsd.StatsDClient;
 
 @RestController
-@RequestMapping(path="/v1/recipie")
+@RequestMapping(path="/v2/recipie")
 public class RecipieController {
 	
 	@Autowired
