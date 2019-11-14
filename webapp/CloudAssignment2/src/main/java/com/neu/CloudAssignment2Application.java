@@ -38,7 +38,7 @@ public class CloudAssignment2Application extends SpringBootServletInitializer{
             }
             catch (Exception e)
             {
-                    log.error("Could not start CloudAssignment2Application", e);
+                    log.error("<--Could not start CloudAssignment2Application-->", e);
             }
     }
 

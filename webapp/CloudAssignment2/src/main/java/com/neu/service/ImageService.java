@@ -10,16 +10,15 @@ import java.util.UUID;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
@@ -36,6 +35,7 @@ import com.neu.repository.RecipieRepository;
 import com.neu.repository.UserRepository;
 
 @Service
+@PropertySource("application.properties")
 public class ImageService {
 	
     private AmazonS3 s3client;
@@ -49,13 +49,12 @@ public class ImageService {
     @Value("${amazonProperties.secretKey}")
     private String secretKey;    
 
-    @SuppressWarnings("deprecation")
 	@PostConstruct
     private void initializeAmazon() {
-        AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
-        this.s3client = new AmazonS3Client(credentials);
-//        BasicAWSCredentials creds = new BasicAWSCredentials("access_key", "secret_key"); 
-//        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).build();
+//        AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
+//        this.s3client = new AmazonS3Client(credentials);
+        BasicAWSCredentials creds = new BasicAWSCredentials(this.accessKey, this.secretKey); 
+        s3client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).build();
     }
     
     
@@ -147,7 +146,7 @@ public class ImageService {
     }
     
 //    private void deleteFileTos3bucket(String fileName, File file) {
-//        s3client.putObject(new PutObjectRequest(bucketName, fileName, file)
+//        s3client.putObjecImageRepositoryt(new PutObjectRequest(bucketName, fileName, file)
 //                .withCannedAcl(CannedAccessControlList.PublicRead));
 //    }
 
