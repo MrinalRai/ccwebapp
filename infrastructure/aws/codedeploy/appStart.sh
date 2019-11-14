@@ -1,6 +1,5 @@
 #!/bin/bash
-# sudo systemctl daemon-reload
-# sudo systemctl restart tomcat.service
+
 cd ~
 
 #sudo chmod 777 /opt/tomcat/bin/

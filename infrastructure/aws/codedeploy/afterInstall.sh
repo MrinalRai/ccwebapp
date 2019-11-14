@@ -5,9 +5,9 @@ sudo rm -rf /opt/tomcat/webapps/docs /opt/tomcat/webapps/examples /opt/tomcat/we
 sudo chown tomcat:tomcat /opt/tomcat/webapps/Cloud*.war
 
 #clean log files
-sudo rm -rf /opt/tomcat/logs/catalina*
-sudo rm -rf /opt/tomcat/logs/*.log
-sudo rm -rf /opt/tomcat/logs/*.txt
+#sudo rm -rf /opt/tomcat/logs/catalina*
+#sudo rm -rf /opt/tomcat/logs/*.log
+#sudo rm -rf /opt/tomcat/logs/*.txt
 
 
 sudo cp /home/centos/vars.sh /opt/tomcat/webapps/.
