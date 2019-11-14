@@ -27,7 +27,7 @@ resource "aws_subnet" "subnet_tf" {
   }"
 }
 resource "aws_db_subnet_group" "dbSubnetGroup" {
-  name       = "main2"
+  name       = "main1"
   subnet_ids = ["${aws_subnet.subnet_tf[1].id}", "${aws_subnet.subnet_tf[2].id}"]
   tags = {
     Name = "My DB subnet group"
@@ -75,23 +75,21 @@ resource "aws_instance" "ec2-instance" {
 	}
 	tags = {
     Name = "myEC2Instance"
-  }
+  	}
 	depends_on = [
-    		aws_db_instance.RDS,
-  	]
+    	aws_db_instance.RDS,]
 	iam_instance_profile = "${aws_iam_instance_profile.test_profile.name}"
-	
-	user_data = <<EOF
-	#!/bin/bash
-	cd /home/centos
-    echo "export DB_USER=root" >> .bashrc
-	echo "export DB_PASSWORD=Admit$18" >> .bashrc
-    echo "export DB_DATABASE_NAME=cloudDb" >> .bashrc
-    echo "export DB_PORT=3306" >> .bashrc
-    echo "export DB_HOST_NAME=${aws_db_instance.RDS.name}" >> .bashrc
-	echo "export S3_BUCKET=${aws_s3_bucket.bucket.bucket}" >> .bashrc
-	EOF
-}
+	user_data = "${templatefile("userdata.sh",
+		{
+			s3_bucket_name = "${aws_s3_bucket.bucket.bucket}",
+			aws_db_endpoint = "${aws_db_instance.RDS.endpoint}",
+			aws_db_name = "${aws_db_instance.RDS.name}",
+			aws_db_username = "${aws_db_instance.RDS.username}",
+			aws_db_password = "${aws_db_instance.RDS.password}",
+			aws_region = "${var.region}",
+			aws_profile = "${var.profile}"
+		})}"
+	}
 #Security group for EC2 instance created
 resource "aws_security_group" "application" {
 	name = "Application security group"
@@ -175,10 +173,7 @@ resource "aws_eip" "ip-test-env" {
 	vpc = true
 }
 #Creating key for S3 encryption
-resource "aws_kms_key" "key" {
-	description = "This key is used to encrypt bucket objects"
-	deletion_window_in_days = 10
-}
+
 #Creating S3 Bucket for codedeploy
 resource "aws_s3_bucket" "bucket" {
 	bucket = "codedeploy.${var.domain-name}"
@@ -189,14 +184,6 @@ resource "aws_s3_bucket" "bucket" {
      		"Name", "${var.domain-name}",
     		)
   	}"
-	server_side_encryption_configuration {
-    		rule {
-			apply_server_side_encryption_by_default {
-				kms_master_key_id = "${aws_kms_key.key.arn}"
-				sse_algorithm = "aws:kms" 
-			}
-      		}
-    	}
 	lifecycle_rule {
 	    id      = "log/"
 	    enabled = true
@@ -222,7 +209,6 @@ resource "aws_s3_bucket" "bucket_image" {
 	server_side_encryption_configuration {
     		rule {
 			apply_server_side_encryption_by_default {
-				kms_master_key_id = "${aws_kms_key.key.arn}"
 				sse_algorithm = "aws:kms" 
 			}
       		}
@@ -313,7 +299,7 @@ policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
 
 resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
-  name        = "CodeDeploy-EC2_S3"
+  name        = "CodeDeploy-EC2-S3"
   path        = "/"
   description = "Allows EC2 instances to read data from S3 buckets"
   policy = <<EOF
@@ -326,8 +312,8 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
 	  ],
       "Effect": "Allow",
       "Resource": [
-		  "${aws_s3_bucket.bucket.arn}"
-		  "${aws_s3_bucket.bucket.arn/*}"
+		  "${aws_s3_bucket.bucket.arn}",
+		  "${aws_s3_bucket.bucket.arn}/*"
 		  ]
     }
   ]
@@ -347,12 +333,8 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3" {
                 "s3:PutObject"
             ],
 			"Effect": "Allow",
-            "Resource": "${aws_s3_bucket.bucket.arn}",
-			"Principal": {
-                "AWS": [
-                    "*"
-                ]
-        }
+            "Resource": "${aws_s3_bucket.bucket.arn}"
+			}
     ]
 }
 EOF
