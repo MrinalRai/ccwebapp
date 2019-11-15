@@ -36,12 +36,12 @@ public class UserController {
 	private final static Logger logger = LoggerFactory.getLogger(UserController.class);
 	private final static Class<UserController> className = UserController.class;
 	private long startTime;
-	private long endTime;
-	
+	private long endTime;	
 	
 	@GetMapping("/self")
     public User getUser(Authentication authentication) {
 		
+		//get mapping for user
 		startTime = System.currentTimeMillis();
 		logger.info(">>> GET: /v1/user/self mapping >>> Class : "+className);
 		statsDClient.incrementCounter("endpoint.v1.user.self.api.get");
