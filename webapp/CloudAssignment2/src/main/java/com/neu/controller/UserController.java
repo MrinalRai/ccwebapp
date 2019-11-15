@@ -44,10 +44,10 @@ public class UserController {
 		
 		startTime = System.currentTimeMillis();
 		logger.info(">>> GET: /v1/user/self mapping >>> Class : "+className);
-		statsDClient.incrementCounter("endpoint.user.self.http.GET");
+		statsDClient.incrementCounter("endpoint.v1.user.self.api.get");
         User u= userRepo.findUserByEmail(authentication.getName()).get();
         endTime = System.currentTimeMillis();
-        statsDClient.recordExecutionTime("endpoint.user.self.http.GET", (endTime-startTime));
+        statsDClient.recordExecutionTime("endpoint.v1.user.self.api.get", (endTime-startTime));
         return u;
         
     }	
@@ -57,7 +57,7 @@ public class UserController {
 		
 		startTime = System.currentTimeMillis();
 		logger.info(">>> POST: /v1/user mapping >>> Class : "+className);
-		statsDClient.incrementCounter("endpoint.user.http.POST");
+		statsDClient.incrementCounter("endpoint.v1.user.api.post");
 		HashMap<String, Object> entities = new HashMap<String, Object>();
 		ResponseEntity<Object> responseEntity = null;
 		try {
@@ -81,7 +81,7 @@ public class UserController {
 			responseEntity = new ResponseEntity<>(entities, HttpStatus.FORBIDDEN);
 		}
 		endTime = System.currentTimeMillis();
-        statsDClient.recordExecutionTime("endpoint.user.http.POST", (endTime-startTime));
+        statsDClient.recordExecutionTime("endpoint.v1.user.api.post", (endTime-startTime));
 		return responseEntity;
 	}
 	
@@ -91,10 +91,10 @@ public class UserController {
 		
 		startTime = System.currentTimeMillis();
 		logger.info(">>> PUT: /v1/user/self mapping >>> Class "+className);
-		statsDClient.incrementCounter("endpoint.user.self.http.PUT");
+		statsDClient.incrementCounter("endpoint.v1.user.self.api.put");
 		ResponseEntity<Object> o = userService.update(user, auth);
 		endTime = System.currentTimeMillis();
-        statsDClient.recordExecutionTime("endpoint.user.self.http.PUT", (endTime-startTime));
+        statsDClient.recordExecutionTime("endpoint.v1.user.self.api.put", (endTime-startTime));
 		return o;
     }
 	
