@@ -18,6 +18,7 @@
         "log_stream_name": "cloudwatch_log_stream"
     },
     "metrics":{
+        "namespace":"csye6225",
         "metrics_collected":{
             "statsd":{
                 "service_address":":8125",
