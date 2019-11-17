@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
@@ -44,17 +45,18 @@ public class ImageService {
     private String endpointUrl;
     @Value("${amazonProperties.bucketName}")
     private String bucketName;
-    @Value("${amazonProperties.accessKey}")
-    private String accessKey;
-    @Value("${amazonProperties.secretKey}")
-    private String secretKey;    
+//    @Value("${amazonProperties.accessKey}")
+//    private String accessKey;
+//    @Value("${amazonProperties.secretKey}")
+//    private String secretKey;    
 
 	@PostConstruct
     private void initializeAmazon() {
-//        AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
-//        this.s3client = new AmazonS3Client(credentials);
-        BasicAWSCredentials creds = new BasicAWSCredentials(this.accessKey, this.secretKey); 
-        s3client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).build();
+//        BasicAWSCredentials creds = new BasicAWSCredentials(this.accessKey, this.secretKey); 
+//        s3client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).build();
+		s3client = AmazonS3ClientBuilder.standard()
+	              .withCredentials(new InstanceProfileCredentialsProvider(false))
+	              .build();
     }
     
     
@@ -144,10 +146,5 @@ public class ImageService {
         s3client.putObject(new PutObjectRequest(bucketName, fileName, file)
                 .withCannedAcl(CannedAccessControlList.PublicRead));
     }
-    
-//    private void deleteFileTos3bucket(String fileName, File file) {
-//        s3client.putObjecImageRepositoryt(new PutObjectRequest(bucketName, fileName, file)
-//                .withCannedAcl(CannedAccessControlList.PublicRead));
-//    }
 
 }
