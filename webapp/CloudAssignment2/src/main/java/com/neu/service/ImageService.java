@@ -10,16 +10,16 @@ import java.util.UUID;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
@@ -36,7 +36,6 @@ import com.neu.repository.RecipieRepository;
 import com.neu.repository.UserRepository;
 
 @Service
-@PropertySource("application.properties")
 public class ImageService {
 	
     private AmazonS3 s3client;
@@ -44,16 +43,12 @@ public class ImageService {
 	@Value("${amazonProperties.endpointUrl}")
     private String endpointUrl;
     @Value("${amazonProperties.bucketName}")
-    private String bucketName;
-//    @Value("${amazonProperties.accessKey}")
-//    private String accessKey;
-//    @Value("${amazonProperties.secretKey}")
-//    private String secretKey;    
+    private String bucketName;   
 
 	@PostConstruct
     private void initializeAmazon() {
-//        BasicAWSCredentials creds = new BasicAWSCredentials(this.accessKey, this.secretKey); 
-//        s3client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).build();
+        //BasicAWSCredentials creds = new BasicAWSCredentials(this.accessKey, this.secretKey); 
+        //s3client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).build();
 		s3client = AmazonS3ClientBuilder.standard()
 	              .withCredentials(new InstanceProfileCredentialsProvider(false))
 	              .build();
@@ -126,7 +121,8 @@ public class ImageService {
 		String imageUrl = im.getUrl();
 		rec.setImage(null);
 		imageRepo.delete(im);
-		String key = imageUrl.substring(65);
+		String key = imageUrl.substring(64);
+		//System.out.println("************image name " + key);
 		s3client.deleteObject(new DeleteObjectRequest(bucketName, key));
 	}
 
@@ -146,5 +142,10 @@ public class ImageService {
         s3client.putObject(new PutObjectRequest(bucketName, fileName, file)
                 .withCannedAcl(CannedAccessControlList.PublicRead));
     }
+    
+//    private void deleteFileTos3bucket(String fileName, File file) {
+//        s3client.putObject(new PutObjectRequest(bucketName, fileName, file)
+//                .withCannedAcl(CannedAccessControlList.PublicRead));
+//    }
 
 }

@@ -36,18 +36,18 @@ public class UserController {
 	private final static Logger logger = LoggerFactory.getLogger(UserController.class);
 	private final static Class<UserController> className = UserController.class;
 	private long startTime;
-	private long endTime;	
+	private long endTime;
+	
 	
 	@GetMapping("/self")
     public User getUser(Authentication authentication) {
 		
-		//get mapping for user
 		startTime = System.currentTimeMillis();
 		logger.info(">>> GET: /v1/user/self mapping >>> Class : "+className);
-		statsDClient.incrementCounter("endpoint.v1.user.self.api.get");
+		this.statsDClient.incrementCounter("endpoint.user.self.http.GET");
         User u= userRepo.findUserByEmail(authentication.getName()).get();
         endTime = System.currentTimeMillis();
-        statsDClient.recordExecutionTime("endpoint.v1.user.self.api.get", (endTime-startTime));
+        this.statsDClient.recordExecutionTime("endpoint.user.self.http.GET", (endTime-startTime));
         return u;
         
     }	
@@ -55,9 +55,11 @@ public class UserController {
 	@PostMapping
 	public ResponseEntity<Object> addUsers(@RequestBody User user) throws Exception {
 		
+		System.out.println(this.statsDClient.toString());
+		
 		startTime = System.currentTimeMillis();
 		logger.info(">>> POST: /v1/user mapping >>> Class : "+className);
-		statsDClient.incrementCounter("endpoint.v1.user.api.post");
+		this.statsDClient.incrementCounter("endpoint.user.http.POST");
 		HashMap<String, Object> entities = new HashMap<String, Object>();
 		ResponseEntity<Object> responseEntity = null;
 		try {
@@ -81,7 +83,7 @@ public class UserController {
 			responseEntity = new ResponseEntity<>(entities, HttpStatus.FORBIDDEN);
 		}
 		endTime = System.currentTimeMillis();
-        statsDClient.recordExecutionTime("endpoint.v1.user.api.post", (endTime-startTime));
+		this.statsDClient.recordExecutionTime("endpoint.user.http.POST", (endTime-startTime));
 		return responseEntity;
 	}
 	
@@ -91,10 +93,10 @@ public class UserController {
 		
 		startTime = System.currentTimeMillis();
 		logger.info(">>> PUT: /v1/user/self mapping >>> Class "+className);
-		statsDClient.incrementCounter("endpoint.v1.user.self.api.put");
+		this.statsDClient.incrementCounter("endpoint.user.self.http.PUT");
 		ResponseEntity<Object> o = userService.update(user, auth);
 		endTime = System.currentTimeMillis();
-        statsDClient.recordExecutionTime("endpoint.v1.user.self.api.put", (endTime-startTime));
+        statsDClient.recordExecutionTime("endpoint.user.self.http.PUT", (endTime-startTime));
 		return o;
     }
 	

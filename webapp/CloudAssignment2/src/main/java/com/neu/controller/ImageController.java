@@ -95,7 +95,7 @@ public class ImageController {
 	}
 	
 	@GetMapping("/{imageId}")
-	public ResponseEntity<Object> getBookById(@PathVariable UUID id, @PathVariable UUID imageId) throws Exception{
+	public ResponseEntity<Object> getImageById(@PathVariable UUID id, @PathVariable UUID imageId) throws Exception{
 
 		startTime = System.currentTimeMillis();
 		ResponseEntity<Object> o;
