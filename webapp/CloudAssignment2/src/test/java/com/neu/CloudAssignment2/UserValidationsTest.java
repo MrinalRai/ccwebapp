@@ -25,7 +25,6 @@ public class UserValidationsTest {
 	
     private static Validator validator;
 
-	private UserService userService = new UserService();
 	private UserController userCont = new UserController();
 
     @BeforeClass

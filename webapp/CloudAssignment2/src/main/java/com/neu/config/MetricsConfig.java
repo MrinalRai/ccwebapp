@@ -20,9 +20,11 @@ public class MetricsConfig {
 	private int metricsServerPort;
 
 	@Bean
-	public StatsDClient metricsClient() {
+	public StatsDClient getStatsDClient() {
 
 		if (publishMetrics) {
+			System.out.println("inside metrics "+ metricsServerHost);
+			
 			return new NonBlockingStatsDClient("csye6225", metricsServerHost, metricsServerPort);
 		}
 

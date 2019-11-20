@@ -17,8 +17,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -41,17 +43,15 @@ public class ImageService {
 	@Value("${amazonProperties.endpointUrl}")
     private String endpointUrl;
     @Value("${amazonProperties.bucketName}")
-    private String bucketName;
-    @Value("${amazonProperties.accessKey}")
-    private String accessKey;
-    @Value("${amazonProperties.secretKey}")
-    private String secretKey;    
+    private String bucketName;   
 
-    @SuppressWarnings("deprecation")
 	@PostConstruct
     private void initializeAmazon() {
-        AWSCredentials credentials = new BasicAWSCredentials(this.accessKey, this.secretKey);
-        this.s3client = new AmazonS3Client(credentials);
+        //BasicAWSCredentials creds = new BasicAWSCredentials(this.accessKey, this.secretKey); 
+        //s3client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).build();
+		s3client = AmazonS3ClientBuilder.standard()
+	              .withCredentials(new InstanceProfileCredentialsProvider(false))
+	              .build();
     }
     
     
@@ -121,7 +121,8 @@ public class ImageService {
 		String imageUrl = im.getUrl();
 		rec.setImage(null);
 		imageRepo.delete(im);
-		String key = imageUrl.substring(65);
+		String key = imageUrl.substring(64);
+		//System.out.println("************image name " + key);
 		s3client.deleteObject(new DeleteObjectRequest(bucketName, key));
 	}
 

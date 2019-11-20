@@ -42,6 +42,7 @@ public class BasicConfiguration extends WebSecurityConfigurerAdapter{
 	                .antMatchers(HttpMethod.GET, "/v1/recipie/{id}/image/{imageId}").permitAll()
 	                .antMatchers(HttpMethod.GET, "/v1/recipie/{id}").permitAll()
 	                .antMatchers(HttpMethod.POST, "/v1/user").permitAll()
+	                .antMatchers(HttpMethod.GET, "/v1/recipes").permitAll()
 	                .anyRequest().authenticated()
 	                .and()
 	                .httpBasic().authenticationEntryPoint(authenticationEntryPoint);

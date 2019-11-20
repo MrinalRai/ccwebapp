@@ -1,5 +1,8 @@
 data "aws_availability_zones" "available" {}
-
+provider "aws" {
+  region = "${var.region}"
+  profile="${var.profile}"
+}
 resource "aws_vpc" "vpc_tf" {
 	cidr_block = "${var.VPC_ciderBlock}"
 	instance_tenancy     = "default"
@@ -13,7 +16,7 @@ resource "aws_vpc" "vpc_tf" {
 }
 
 resource "aws_subnet" "subnet_tf" {
-	count = 1
+	count = 3
 	availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
 	cidr_block = "10.0.${count.index}.0/24"
 	vpc_id = "${aws_vpc.vpc_tf.id}"
@@ -23,6 +26,18 @@ resource "aws_subnet" "subnet_tf" {
     )
   }"
 }
+resource "aws_db_subnet_group" "dbSubnetGroup" {
+<<<<<<< HEAD
+  name       = "main"
+=======
+  name       = "main2"
+>>>>>>> b4c0685bc6af0d1e5dc208d556fd578f0c9bd713
+  subnet_ids = ["${aws_subnet.subnet_tf[1].id}", "${aws_subnet.subnet_tf[2].id}"]
+  tags = {
+    Name = "My DB subnet group"
+  }
+}
+
 
 resource "aws_internet_gateway" "ig_tf" {
 	vpc_id = "${aws_vpc.vpc_tf.id}"
@@ -42,12 +57,12 @@ resource "aws_route_table" "rt_tf" {
 }
 
 resource "aws_route_table_association" "rtAsso_tf" {
-	count = 1
+	count = 3
 	subnet_id = "${aws_subnet.subnet_tf.*.id[count.index]}"
 	route_table_id = "${aws_route_table.rt_tf.id}"
 }
 
- # * * * * * * * * * Security group creation * * * * * * * * * *
+ # * * * * * * * * * * * * * Security group creation * * * * * * * * * * * * * *
 
 #EC2 instance creation
 resource "aws_instance" "ec2-instance" {
@@ -56,17 +71,29 @@ resource "aws_instance" "ec2-instance" {
 	instance_type = "${var.instance_type}"
 	key_name = "${var.ami_key_pair_name}"
 	security_groups = ["${aws_security_group.application.id}"]
-	subnet_id = "${aws_subnet.subnet_tf.*.id[count.index]}"
+	subnet_id = "${aws_subnet.subnet_tf[0].id}"
 	disable_api_termination = "false"
 	root_block_device {
 		volume_size = "${var.volume_size}"
 		volume_type = "${var.volume_type}"
 	}
+	tags = {
+    Name = "myEC2Instance"
+  	}
 	depends_on = [
-    		aws_db_instance.RDS,
-  	]
+    	aws_db_instance.RDS,]
 	iam_instance_profile = "${aws_iam_instance_profile.test_profile.name}"
-}
+	user_data = "${templatefile("userdata.sh",
+		{
+			s3_bucket_name = "${aws_s3_bucket.bucket.bucket}",
+			aws_db_endpoint = "${aws_db_instance.RDS.endpoint}",
+			aws_db_name = "${aws_db_instance.RDS.name}",
+			aws_db_username = "${aws_db_instance.RDS.username}",
+			aws_db_password = "${aws_db_instance.RDS.password}",
+			aws_region = "${var.region}",
+			aws_profile = "${var.profile}"
+		})}"
+	}
 #Security group for EC2 instance created
 resource "aws_security_group" "application" {
 	name = "Application security group"
@@ -98,14 +125,13 @@ resource "aws_security_group" "application" {
 	}
 	egress {
 		cidr_blocks = ["0.0.0.0/0"]
-	    	from_port = 0
+	    from_port = 0
 	   	to_port = 0
-	    	protocol = "-1"
+	    protocol = "-1"
 	}
 }
 #Creating RDS instances
 resource "aws_db_instance" "RDS"{
-	count = 1
 	name = "csye6225"
 	allocated_storage = 20
 	engine = "mysql"
@@ -116,12 +142,11 @@ resource "aws_db_instance" "RDS"{
 	port = "3306"
 	username = "root"
 	password = "Admit$18"
-	#db_subnet_group_name = "${aws_subnet.subnet_tf.*.id[count.index]}"
 	publicly_accessible = "true"
 	skip_final_snapshot = "true"
-	#final_snapshot_identifier = "${aws_db_instance.RDS.*.id[count.index]}-final-snapshot"
+	vpc_security_group_ids = ["${aws_security_group.database.id}"]
+	db_subnet_group_name = "${aws_db_subnet_group.dbSubnetGroup.name}"
 }
-
 #creating database security group
 resource "aws_security_group" "database" {
   name        = "Database Security Group"
@@ -146,18 +171,14 @@ resource "aws_security_group_rule" "egress-database-rule" {
     security_group_id = "${aws_security_group.database.id}"
     source_security_group_id  = "${aws_security_group.application.id}"
 }
-
 resource "aws_eip" "ip-test-env" {
 	count = 1
 	instance = "${aws_instance.ec2-instance.*.id[count.index]}"
 	vpc = true
 }
 #Creating key for S3 encryption
-resource "aws_kms_key" "key" {
-	description = "This key is used to encrypt bucket objects"
-	deletion_window_in_days = 10
-}
-#Creating S3 Buckets
+
+#Creating S3 Bucket for codedeploy
 resource "aws_s3_bucket" "bucket" {
 	bucket = "codedeploy.${var.domain-name}"
 	acl    = "private"
@@ -167,14 +188,6 @@ resource "aws_s3_bucket" "bucket" {
      		"Name", "${var.domain-name}",
     		)
   	}"
-	server_side_encryption_configuration {
-    		rule {
-			apply_server_side_encryption_by_default {
-				kms_master_key_id = "${aws_kms_key.key.arn}"
-				sse_algorithm = "aws:kms" 
-			}
-      		}
-    	}
 	lifecycle_rule {
 	    id      = "log/"
 	    enabled = true
@@ -200,7 +213,6 @@ resource "aws_s3_bucket" "bucket_image" {
 	server_side_encryption_configuration {
     		rule {
 			apply_server_side_encryption_by_default {
-				kms_master_key_id = "${aws_kms_key.key.arn}"
 				sse_algorithm = "aws:kms" 
 			}
       		}
@@ -213,7 +225,6 @@ resource "aws_s3_bucket" "bucket_image" {
 			storage_class = "STANDARD_IA"
 		}
 	}
- 
 }
 
 # Creating DynamoDB table
@@ -225,9 +236,7 @@ resource "aws_dynamodb_table" "basic-dynamodb-table" {
 	 attribute {
 		name = "id"
 		type = "S"
-  	}
-  
-}
+  	}}
 data "aws_caller_identity" "current" {}
 
 locals {
@@ -278,7 +287,8 @@ resource "aws_iam_role" "codedeploysrv" {
       "Action": "sts:AssumeRole",
       "Principal":
         {"Service": "codedeploy.amazonaws.com"},
-      "Effect": "Allow"
+      "Effect": "Allow",
+	  "Sid": ""
     }
   ]
 }
@@ -289,8 +299,9 @@ resource "aws_iam_role_policy_attachment" "test-attach-codedeploysrv-policy" {
 role      = "${aws_iam_role.codedeploysrv.name}"
 policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
+
 resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
-  name        = "CodeDeploy-EC2_S3"
+  name        = "CodeDeploy-EC2-S3"
   path        = "/"
   description = "Allows EC2 instances to read data from S3 buckets"
   policy = <<EOF
@@ -299,18 +310,25 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
   "Statement": [
     {
       "Action": [
-        "s3:Get*",
-        "s3:List*",
-		"s3:DeleteBucket",
-		"s3:DeleteObject*"
+        "s3:*"
 	  ],
       "Effect": "Allow",
-      "Resource": "${aws_s3_bucket.bucket.arn}"
+      "Resource": [
+		  "${aws_s3_bucket.bucket.arn}",
+<<<<<<< HEAD
+		  "${aws_s3_bucket.bucket.arn}/*",
+      "${aws_s3_bucket.bucket_image.arn}",
+		  "${aws_s3_bucket.bucket_image.arn}/*"
+=======
+		  "${aws_s3_bucket.bucket.arn}/*"
+>>>>>>> b4c0685bc6af0d1e5dc208d556fd578f0c9bd713
+		  ]
     }
   ]
 }
 EOF
 }
+
 resource "aws_iam_policy" "CircleCI-Upload-To-S3" {
   name        = "CircleCI-Upload-To-S3"
   path        = "/"
@@ -324,7 +342,7 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3" {
             ],
 			"Effect": "Allow",
             "Resource": "${aws_s3_bucket.bucket.arn}"
-        }
+			}
     ]
 }
 EOF
@@ -432,22 +450,26 @@ resource "aws_iam_role" "ec2CodplyRole" {
       "Action": "sts:AssumeRole",
       "Principal":
         {"Service": "ec2.amazonaws.com"},
-      "Effect": "Allow"
+      "Effect": "Allow",
+	   "Sid": ""
     }
   ]
 }
 EOF
 }
 
-
 resource "aws_iam_instance_profile" "test_profile" {
   name = "test_profile"
   role = "${aws_iam_role.ec2CodplyRole.name}"
 }
 
-resource "aws_iam_role_policy_attachment" "test-attach-role-policy" {
-role      = "${aws_iam_role.ec2CodplyRole.name}"
-policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
+resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach" {
+  role       = "${aws_iam_role.ec2CodplyRole.name}"
+  policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
+}
+resource "aws_iam_role_policy_attachment" "ec2CodplyRolePolicyAttach2" {
+  role       = "${aws_iam_role.ec2CodplyRole.name}"
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 resource "aws_iam_user_policy_attachment" "test-attach1" {
@@ -465,8 +487,8 @@ policy_arn = "${aws_iam_policy.CircleCI-Upload-To-S3.arn}"
 resource "aws_iam_user_policy_attachment" "test-attach4" {
 user      = "circleci"
 policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
+<<<<<<< HEAD
 }
-
-
-
-
+=======
+}
+>>>>>>> b4c0685bc6af0d1e5dc208d556fd578f0c9bd713

@@ -1,5 +1,7 @@
 package com.neu.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -9,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.neu.exceptionHandler.RecipieValidationException;
 import com.neu.exceptionHandler.UserNotFoundException;
 import com.neu.model.Recipie;
@@ -25,6 +30,12 @@ public class RecipieService {
 	private UserRepository userRepo;
 	@Autowired
 	private NutritionInfoRepository nutRepo;
+	
+	// Initialize the example class.
+	final SNSMessageAttributes message = new SNSMessageAttributes();
+	
+	// Add a message attribute with a list of string values.
+	private ArrayList<String> interestsValues = new ArrayList<String>();
 	
 	public Recipie add(Recipie recipie, Authentication auth) throws RecipieValidationException {
 		Optional<User> u = userRepo.findUserByEmail(auth.getName());
@@ -114,6 +125,54 @@ public class RecipieService {
 			
 		return recRepo.save(rec);
 		}
+	
+	
+	public Recipie latestRecipe() throws RecipieValidationException {
+		Recipie recipe = recRepo.findLatestRecipe();
+		//System.out.println("latest recipe ===== " + recipe.getTitle());
+		if (recipe == null) {
+			throw new RecipieValidationException("No recipes are posted yet!!");
+		}
+		return recipe;
+	}
+	
+	public void emailRecipes(Authentication auth) throws RecipieValidationException {
+		Optional<User> u = userRepo.findUserByEmail(auth.getName());
+		//ArrayList<String> userIds = new ArrayList<String>();
+		Recipie r = new Recipie();
+		if (u.isPresent()) {
+			User ul = u.get();
+			AmazonSNS sns = AmazonSNSClientBuilder.standard()
+					.withCredentials(new InstanceProfileCredentialsProvider(true)).build();
+			UUID userId = ul.getId();
+			System.out.println("userId:  " + userId);
+			// AmazonSNSClient sns = new AmazonSNSClient(new
+			// InstanceProfileCredentialsProvider(true));
+			String topicArn = sns.createTopic("email_request").getTopicArn();
+			interestsValues = recRepo.findAllRecipesForAUser(userId);
+			message.addAttribute("recipes", interestsValues);
+			String msgId = message.publish(sns, topicArn);
+			//System.out.println("MessageId: " + publishResult.getMessageId());
+			System.out.println("Message Id : "+ msgId);
+		}
+	}
+	
+	public List<String> getAllRecipesForUser(Authentication auth) throws RecipieValidationException {
+		List<String> recipes = new ArrayList<String>();
+		Optional<User> u = userRepo.findUserByEmail(auth.getName());
+		//Recipie r = new Recipie();
+		if (u.isPresent()) {
+			User ul = u.get();
+			UUID userId = ul.getId();
+			System.out.println("userId:  " + userId);
+//			String idNoDash = userId.toString().replace("-", "");
+//			System.out.println("uuid with =out dashes:  "+idNoDash);
+//			UUID uuid = UUID.fromString(idNoDash);
+//			System.out.println("uuid: " + uuid);
+			recipes = recRepo.findAllRecipesForAUser(userId);
+		}
+		return recipes;
+	}
 	
 
 }
