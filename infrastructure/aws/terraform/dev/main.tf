@@ -17,7 +17,7 @@ module "network_mod"{
 
 module "application_mod"{
     source= "../modules/application"
-    domain-name="dev.csye6225mrinal.me"
+    domain-name=""
     ami_id="ami-01d78ed9d706303e8"
     ami_name="csye6225_1573741914"
     ami_key_pair_name="csye6225_ssh"
@@ -28,11 +28,8 @@ module "application_mod"{
     profile="dev"
     vpc-cluster-name="lambda-check"
     VPC_ciderBlock="10.0.0.0/16"
-    account_id="227417268421"
-    //subnetIds="${module.network_mod.subnetIds}"
+    account_id=""
     vpcop_id="${module.network_mod.vpcop_id}"
-    //ec2CodplyRoleName = "${module.circleci.ec2CodplyRoleName}"
     subnets="${module.network_mod.subnets}"
-    certiArn = "arn:aws:acm:us-east-1:227417268421:certificate/d4ff8a0b-ba70-413c-a339-253cf56d61cf"
-   // subnetIds = "${module.network_mod.subnetIds}"
+    certiArn = ""
 }
