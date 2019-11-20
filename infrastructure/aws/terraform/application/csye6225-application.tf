@@ -27,7 +27,11 @@ resource "aws_subnet" "subnet_tf" {
   }"
 }
 resource "aws_db_subnet_group" "dbSubnetGroup" {
+<<<<<<< HEAD
   name       = "main"
+=======
+  name       = "main2"
+>>>>>>> b4c0685bc6af0d1e5dc208d556fd578f0c9bd713
   subnet_ids = ["${aws_subnet.subnet_tf[1].id}", "${aws_subnet.subnet_tf[2].id}"]
   tags = {
     Name = "My DB subnet group"
@@ -311,9 +315,13 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
       "Effect": "Allow",
       "Resource": [
 		  "${aws_s3_bucket.bucket.arn}",
+<<<<<<< HEAD
 		  "${aws_s3_bucket.bucket.arn}/*",
       "${aws_s3_bucket.bucket_image.arn}",
 		  "${aws_s3_bucket.bucket_image.arn}/*"
+=======
+		  "${aws_s3_bucket.bucket.arn}/*"
+>>>>>>> b4c0685bc6af0d1e5dc208d556fd578f0c9bd713
 		  ]
     }
   ]
@@ -479,4 +487,8 @@ policy_arn = "${aws_iam_policy.CircleCI-Upload-To-S3.arn}"
 resource "aws_iam_user_policy_attachment" "test-attach4" {
 user      = "circleci"
 policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b4c0685bc6af0d1e5dc208d556fd578f0c9bd713
