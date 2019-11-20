@@ -22,5 +22,5 @@ hooks:
      runas: centos
   ApplicationStart:
    - location: ./infrastructure/aws/codedeploy/appStart.sh
-     timeout: 10000
+     timeout: 1500
      runas: centos

@@ -58,7 +58,7 @@ resource "aws_route_table_association" "rtAsso_tf" {
 	route_table_id = "${aws_route_table.rt_tf.id}"
 }
 
- # * * * * * * * * * Security group creation * * * * * * * * * *
+ # * * * * * * * * * * * * * Security group creation * * * * * * * * * * * * * *
 
 #EC2 instance creation
 resource "aws_instance" "ec2-instance" {
@@ -121,9 +121,9 @@ resource "aws_security_group" "application" {
 	}
 	egress {
 		cidr_blocks = ["0.0.0.0/0"]
-	    	from_port = 0
+	    from_port = 0
 	   	to_port = 0
-	    	protocol = "-1"
+	    protocol = "-1"
 	}
 }
 #Creating RDS instances
@@ -232,9 +232,7 @@ resource "aws_dynamodb_table" "basic-dynamodb-table" {
 	 attribute {
 		name = "id"
 		type = "S"
-  	}
-  
-}
+  	}}
 data "aws_caller_identity" "current" {}
 
 locals {
@@ -313,7 +311,9 @@ resource "aws_iam_policy" "CodeDeploy-EC2-S3" {
       "Effect": "Allow",
       "Resource": [
 		  "${aws_s3_bucket.bucket.arn}",
-		  "${aws_s3_bucket.bucket.arn}/*"
+		  "${aws_s3_bucket.bucket.arn}/*",
+      "${aws_s3_bucket.bucket_image.arn}",
+		  "${aws_s3_bucket.bucket_image.arn}/*"
 		  ]
     }
   ]

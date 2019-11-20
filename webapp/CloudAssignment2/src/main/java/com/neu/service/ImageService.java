@@ -121,7 +121,7 @@ public class ImageService {
 		String imageUrl = im.getUrl();
 		rec.setImage(null);
 		imageRepo.delete(im);
-		String key = imageUrl.substring(65);
+		String key = imageUrl.substring(52);
 		s3client.deleteObject(new DeleteObjectRequest(bucketName, key));
 	}
 
