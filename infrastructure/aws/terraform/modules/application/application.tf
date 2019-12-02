@@ -268,6 +268,24 @@ policy_arn = "${aws_iam_policy.CodeDeploy-EC2-S3.arn}"
 
 # ============================= Security group creation ===========================
 
+# ---------- Load Balancer Security Group -------------------
+resource "aws_security_group" "loadSecurity" {
+	name = "Load Balancer security group"
+	description = "Allow traffic for Webapp"
+	vpc_id = "${var.vpcop_id}"
+	ingress {
+		cidr_blocks = ["0.0.0.0/0"]
+		from_port = 443
+		to_port = 443
+		protocol = "tcp"
+	}
+	egress {
+		cidr_blocks = ["0.0.0.0/0"]
+	    from_port = 0
+	   	to_port = 0
+	    protocol = "-1"
+	}
+}
 #----------Application security Group ---------------------
 
 resource "aws_security_group" "application" {
@@ -279,14 +297,14 @@ resource "aws_security_group" "application" {
 		from_port = 22
 		to_port = 22
 		protocol = "tcp"
-    security_groups = ["${aws_security_group.albSecurityGrp.id}"]
+    security_groups = ["${aws_security_group.loadSecurity.id}"]
 	}
 	ingress {
 		cidr_blocks = ["0.0.0.0/0"]
 		from_port = 8080
 		to_port = 8080
 		protocol = "tcp"
-    security_groups = ["${aws_security_group.albSecurityGrp.id}"]
+    security_groups = ["${aws_security_group.loadSecurity.id}"]
 	}
 	egress {
 		cidr_blocks = ["0.0.0.0/0"]
@@ -295,14 +313,6 @@ resource "aws_security_group" "application" {
 	    protocol = "-1"
 	}
 }
-
-// output "aws_security_group_application"{
-// 	value = "${aws_security_group.application}"
-// }
-
-// output "app_sec_id"{
-// 	value = "${aws_security_group.application.id}"
-// }
 #-------------------------database security group---------------------------
 resource "aws_security_group" "database" {
   name        = "Database Security Group"
@@ -329,28 +339,6 @@ resource "aws_security_group_rule" "egress-database-rule" {
     security_group_id = "${aws_security_group.database.id}"
     source_security_group_id  = "${aws_security_group.application.id}"
 }
-
-#===================== Load balancer Security Group===============
-resource "aws_security_group" "albSecurityGrp" {
-	name = "Alb security group"
-	description = "Allow traffic for Webapp"
-	vpc_id = "${var.vpcop_id}"
-	ingress {
-		cidr_blocks = ["0.0.0.0/0"]
-		from_port = 443
-		to_port = 443
-		protocol = "tcp"
-    //security_groups = ["${aws_security_group.albSecurityGrp.id}"]
-	}
-
-	egress {
-		cidr_blocks = ["0.0.0.0/0"]
-	    from_port = 0
-	   	to_port = 0
-	    protocol = "-1"
-	}
-}
-
 
 #========================= RDS instances ============================
 
@@ -459,10 +447,6 @@ resource "aws_s3_bucket" "lambda_bucket" {
 		}
 	}
 }
-
-// output "S3_bucket_image_arn"{
-// 	value = "${aws_s3_bucket.bucket_image.arn}"
-// }
 # ====================== DynamoDB table ===========================
 
 resource "aws_dynamodb_table" "basic-dynamodb-table" {
@@ -481,7 +465,41 @@ resource "aws_dynamodb_table" "basic-dynamodb-table" {
 resource "aws_codedeploy_app" "csye6225-webapp" {
   name = "csye6225-webapp"
 }
+resource "aws_codedeploy_app" "csye6225-lambda" {
+  compute_platform = "ECS"
+  name = "csye6225-lambda"
+}
+resource "aws_codedeploy_deployment_group" "csye6225-lambda-deployment" {
+  app_name              = "${aws_codedeploy_app.csye6225-lambda.name}"
+  deployment_group_name = "csye6225-lambda-deployment"
+  deployment_config_name = "CodeDeployDefault.AllAtOnce"
+  service_role_arn      = "${aws_iam_role.codedeploysrv.arn}"
+  autoscaling_groups = ["${aws_autoscaling_group.ec2_asg.name}"]
+  // ec2_tag_filter {
+  //   key   = "Name"
+  //   type  = "KEY_AND_VALUE"
+  //   value = "myEC2Instance"
+  // }
+  deployment_style {
+    deployment_option = "WITHOUT_TRAFFIC_CONTROL"
+    deployment_type   = "IN_PLACE"
+  }
 
+  auto_rollback_configuration {
+    enabled = true
+    events  = ["DEPLOYMENT_FAILURE"]
+  }
+
+  alarm_configuration {
+    alarms  = ["Deployment-Alarm"]
+    enabled = true
+  }
+  load_balancer_info{
+	  target_group_info{
+		  name = "${aws_lb_target_group.lb_tg.name}"
+	  }
+  }
+  }
 resource "aws_codedeploy_deployment_group" "csye6225-webapp-deployment" {
   app_name              = "${aws_codedeploy_app.csye6225-webapp.name}"
   deployment_group_name = "csye6225-webapp-deployment"
@@ -529,11 +547,11 @@ resource "aws_nat_gateway" "gw_1" {
 }*/
 # ========================= Load Balancer ================================
 
-resource "aws_lb" "alb" {
-  name = "alb"
+resource "aws_lb" "albOne" {
+  name = "albOne"
   subnets = "${var.subnets}"
   load_balancer_type = "application"
-  security_groups = ["${aws_security_group.application.id}"]
+  security_groups = ["${aws_security_group.loadSecurity.id}"]
   internal = false
   enable_deletion_protection = false
   tags = {
@@ -541,10 +559,10 @@ resource "aws_lb" "alb" {
   }
 }
 resource "aws_lb_listener" "lb_listener1" {
-  load_balancer_arn = "${aws_lb.alb.arn}"
+  load_balancer_arn = "${aws_lb.albOne.arn}"
   port              = "443"
   protocol          = "HTTPS"
-  //ssl_policy        = "ELBSecurityPolicy-2016-08"
+  //ssl_policy        = "ELBSecurityPolicy-TLS-1-2-Ext-2018-06"
   certificate_arn   = "${var.certiArn}"
   default_action {
     type             = "forward"
@@ -556,65 +574,49 @@ resource "aws_lb_target_group" "lb_tg" {
   name        = "tf-lb-tg"
   port        = "8080"
   protocol    = "HTTP"
-  //target_type = "lambda"
+  #target_type = "lambda"
   vpc_id      = "${var.vpcop_id}"
   tags        = {
       name    = "tf-lb-tg"
   }
   health_check {
-      healthy_threshold = 3
-      unhealthy_threshold = 3
+      healthy_threshold = 5
+      unhealthy_threshold = 2
+      protocol    = "HTTP"
       timeout = 5
-      interval = 60
-      path = "/apphealthstatus"
+      interval = 30
+      path = "/"
       port = "8080"
       matcher = "200"
-      protocol="HTTP"
   }
-
 }
 
 
-// resource "aws_alb_listener_rule" "listener_rule" {
-//   listener_arn = "${aws_lb_listener.lb_listener1.arn}"  
-//   priority     = 100   
-//   action {    
-//     type             = "forward"    
-//     target_group_arn = "${aws_lb_target_group.lb_tg.arn}"  
-//   }   
-//   condition {    
-//     field  = "path-pattern"    
-//     values = ["/api*"]  
-//   }
-// }
-
-// resource "aws_lb_target_group" "lb_tg" {
-//   name     = "lb-tg"
-//   port     = 443
-//   protocol = "HTTPS"
-//   vpc_id   = "${var.vpcop_id}"
-
-//   health_check {
-//     healthy_threshold   = 3
-//     unhealthy_threshold = 10
-//     timeout             = 3
-//     path              = "HTTPS:8080/"
-//     interval            = 30
-//   }
-// }
+/*resource "aws_alb_listener_rule" "listener_rule" {
+  listener_arn = "${aws_lb_listener.lb_listener1.arn}"  
+  priority     = 100   
+  action {    
+    type             = "forward"    
+    target_group_arn = "${aws_lb_target_group.lb_tg.arn}"  
+  }   
+  condition {    
+    field  = "path-pattern"    
+    values = ["/api*"]  
+  }
+}
 
 #Autoscaling Attachment
-// resource "aws_autoscaling_attachment" "asg_targetgroup" {
-//   alb_target_group_arn   = "${aws_lb_target_group.lb_tg.arn}"
-//   autoscaling_group_name = "${aws_autoscaling_group.ec2_asg.id}"
-// }
-/*resource "aws_lb_target_group_attachment" "test" {
+resource "aws_autoscaling_attachment" "asg_targetgroup" {
+  alb_target_group_arn   = "${aws_lb_target_group.lb_tg.arn}"
+  autoscaling_group_name = "${aws_autoscaling_group.ec2_asg.id}"
+}
+resource "aws_lb_target_group_attachment" "test" {
   target_group_arn = "${aws_lb_target_group.lb_tg.arn}"
   target_id        = "${aws_lambda_function.func_lambda.arn}"
   port             = 80
   depends_on       = ["aws_lambda_permission.sns"]
+
 }*/
-  
 # ====================== EC2 Launch Configuration ===========================
 resource "aws_launch_configuration" "ec2_lc" {
   name   = "asg_launch_config"
@@ -655,10 +657,10 @@ resource "aws_autoscaling_group" "ec2_asg" {
   launch_configuration = "${aws_launch_configuration.ec2_lc.name}"
   min_size             = 3
   max_size             = 10
-  desired_capacity     = 3
-  //health_check_type    = "ELB"
+  #health_check_type    = "ELB"
+  target_group_arns = ["${aws_lb_target_group.lb_tg.arn}"]
   vpc_zone_identifier  = var.subnets
-  target_group_arns     = ["${aws_lb_target_group.lb_tg.arn}"]
+  desired_capacity = 3
   lifecycle {
     create_before_destroy = true
   }
@@ -667,12 +669,9 @@ resource "aws_autoscaling_group" "ec2_asg" {
     value               = "dev"
     propagate_at_launch = true
   }
-  // depends_on = [
-  //   "aws_db_instance.RDS",
-  //   "aws_launch_configuration.ec2_lc",
-  //   "var.subnets",
-  //   "aws_lb_target_group.lb_tg"
-  // ]
+  depends_on = [
+    "aws_db_instance.RDS"
+  ]
 }
 
 
@@ -700,10 +699,8 @@ resource "aws_cloudwatch_metric_alarm" "up-cpu-alarm" {
   dimensions = "${
       		map(
      		"AutoScalingGroupName", "${aws_autoscaling_group.ec2_asg.name}",
-    		)
-  	}"
-}
- 
+    		)}"
+  } 
 
 # SCALE - DOWN Policy
 resource "aws_autoscaling_policy" "asg_scaleDwn" {
@@ -755,16 +752,16 @@ EOF
 }
 
 resource "aws_iam_policy" "sns_policy" {
-  name        = "testPolicy"
+  name        = "sns_policy"
   path        = "/"
   description = "My test policy"
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Id": "sns_policy_ID",
+  "Id": "snsPolicy",
   "Statement": [
     {
-      "Sid": "snsStatementID1",
+      "Sid": "snsPolicy",
       "Effect": "Allow",
       "Action": [
         "SNS:GetTopicAttributes",
@@ -788,25 +785,6 @@ resource "aws_iam_policy" "sns_policy" {
 }
 EOF
 }
-/*resource "aws_iam_role" "iam_for_sns" {
-  name = "iam_for_sns"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "ssm.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
-}*/
 resource "aws_iam_role_policy_attachment" "snspolicy_role_attach1" {
   role       = "${aws_iam_role.iam_for_lambda.name}"
   policy_arn = "${aws_iam_policy.sns_policy.arn}"
@@ -834,7 +812,7 @@ resource "aws_iam_policy" "lambda_logging" {
         "logs:PutLogEvents",
         "logs:DescribeLogStreams"
       ],
-      "Resource": "arn:aws:logs:*:*:*",
+      "Resource": "arn:aws:logs:::*",
       "Effect": "Allow"
     },
     {
@@ -862,12 +840,13 @@ resource "aws_iam_policy" "lambda_logging" {
         "dynamodb:DescribeTable"
       ],
       "Resource": ["${aws_dynamodb_table.snslambda_table.arn}",
-                  "${aws_dynamodb_table.snslambda_table.stream_arn}"]
+      "${aws_dynamodb_table.snslambda_table.stream_arn}"]
   },
   {
      "Effect": "Allow",
       "Action": [
-        "s3:*"
+        "s3:GetObject",
+        "s3:PutObject"
       ],
       "Resource": ["${aws_s3_bucket.bucket.arn}",
 		              "${aws_s3_bucket.bucket.arn}/*",
@@ -914,7 +893,7 @@ resource "aws_iam_role_policy_attachment" "lambda_role_attach2" {
 #--------------------- Create Lambda Function ---------------------
 
 resource "aws_lambda_function" "func_lambda" {
-  filename      = "csye6225_lambda.zip"
+  filename      = "../modules/application/csye6225_lambda.zip"
   function_name = "func_lambda"
   role          = "${aws_iam_role.iam_for_lambda.arn}"
   handler       = "LogEvent"
@@ -941,7 +920,7 @@ resource "aws_lambda_permission" "sns" {
   action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.func_lambda.arn}"
   principal     = "sns.amazonaws.com"
-  source_arn    = "${aws_sns_topic.email_request.arn}"
+  source_arn = "${aws_sns_topic.email_request.arn}"
 }
 
 #---------------- Subscribe Lambda function to SNS topic ---------------
@@ -983,17 +962,15 @@ resource "aws_dynamodb_table" "snslambda_table" {
 # ================================ ROUTE 53 =========================================
 resource "aws_route53_zone" "routezone" {
   name = "${var.domain-name}"
-  
 }
 
 resource "aws_route53_record" "route" {
   zone_id = "${aws_route53_zone.routezone.zone_id}"
   name    = "${var.domain-name}"
   type    = "A"
-
   alias {
-    name                   = "${aws_lb.alb.dns_name}"
-    zone_id                = "${aws_lb.alb.zone_id}"
+    name                   = "${aws_lb.albOne.dns_name}"
+    zone_id                = "${aws_lb.albOne.zone_id}"
     evaluate_target_health = true
   }
 }
