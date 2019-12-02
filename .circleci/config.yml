@@ -22,6 +22,7 @@ jobs:
             ls -al
             cd webapp/CloudAssignment2
             rm -rf build
+            gradle wrapper
             chmod +x gradlew
             ./gradlew clean build
             
