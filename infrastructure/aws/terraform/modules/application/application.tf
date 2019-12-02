@@ -52,7 +52,7 @@ EOF
 // }
 
 resource "aws_iam_instance_profile" "test_profile" {
-  name = "test_profile"
+  name = "test_profile1"
   role = "${aws_iam_role.ec2CodplyRole.name}"
 }
 // output "instance_profile_op"{
@@ -511,7 +511,7 @@ resource "aws_lb" "alb" {
   load_balancer_type = "application"
   security_groups = ["${aws_security_group.application.id}"]
   internal = false
-  enable_deletion_protection = true
+  enable_deletion_protection = false
   tags = {
     Name = "terraform-alb"
   }
@@ -528,43 +528,24 @@ resource "aws_lb_listener" "lb_listener1" {
   }
 }
 
-// output "aws_lb_listenerARN"{
-//   value = "${aws_lb_listener.lb_listener1.arn}"
-// }
-/* Professor said not to do this, but then where do we have to handle http?
-resource "aws_lb_listener" "lb_listener2" {
-  load_balancer_arn = "${aws_lb.alb.arn}"
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
-  }
-}*/
-
 resource "aws_lb_target_group" "lb_tg" {
   name        = "tf-lb-tg"
   port        = "8080"
   protocol    = "HTTP"
-  target_type = "ip"
+  //target_type = "lambda"
   vpc_id      = "${var.vpcop_id}"
   tags        = {
       name    = "tf-lb-tg"
   }
   health_check {
-      healthy_threshold = 3
-      unhealthy_threshold = 5
+      healthy_threshold = 2
+      unhealthy_threshold = 2
       timeout = 5
-      interval = 30
+      interval = 60
       path = "/apphealthstatus"
       port = "8080"
       matcher = "200"
+      protocol="HTTP"
   }
 
 }
@@ -603,11 +584,12 @@ resource "aws_autoscaling_attachment" "asg_targetgroup" {
   alb_target_group_arn   = "${aws_lb_target_group.lb_tg.arn}"
   autoscaling_group_name = "${aws_autoscaling_group.ec2_asg.id}"
 }
-resource "aws_lb_target_group_attachment" "test" {
+/*resource "aws_lb_target_group_attachment" "test" {
   target_group_arn = "${aws_lb_target_group.lb_tg.arn}"
-  target_id        = "${aws_lambda_function.func_lambda.id}"
+  target_id        = "${aws_lambda_function.func_lambda.arn}"
   port             = 80
-}
+  depends_on       = ["aws_lambda_permission.sns"]
+}*/
   
 # ====================== EC2 Launch Configuration ===========================
 resource "aws_launch_configuration" "ec2_lc" {
@@ -658,6 +640,7 @@ resource "aws_autoscaling_group" "ec2_asg" {
     propagate_at_launch = true
   }
   depends_on = [
+    "aws_db_instance.RDS",
     "aws_launch_configuration.ec2_lc",
     "var.subnets",
     "aws_lb_target_group.lb_tg"
@@ -744,20 +727,17 @@ EOF
 }
 
 resource "aws_iam_policy" "sns_policy" {
-  name        = "test_policy"
+  name        = "testPolicy"
   path        = "/"
   description = "My test policy"
   policy = <<EOF
 {
-  "Version": "2008-10-17",
+  "Version": "2012-10-17",
   "Id": "sns_policy_ID",
   "Statement": [
     {
-      "Sid": "sns_statement_ID",
+      "Sid": "snsStatementID1",
       "Effect": "Allow",
-      "Principal": {
-        "AWS": "*"
-      },
       "Action": [
         "SNS:GetTopicAttributes",
         "SNS:SetTopicAttributes",
@@ -842,7 +822,8 @@ resource "aws_iam_policy" "lambda_logging" {
         "dynamodb:DescribeStream",
         "dynamodb:GetRecords",
         "dynamodb:GetShardIterator",
-        "dynamodb:ListStreams","dynamodb:GetItem",
+        "dynamodb:ListStreams",
+        "dynamodb:GetItem",
         "dynamodb:DeleteItem",
         "dynamodb:PutItem",
         "dynamodb:Scan",
@@ -852,13 +833,13 @@ resource "aws_iam_policy" "lambda_logging" {
         "dynamodb:BatchGetItem",
         "dynamodb:DescribeTable"
       ],
-      "Resource": "${aws_dynamodb_table.snslambda_table.arn}"
+      "Resource": ["${aws_dynamodb_table.snslambda_table.arn}",
+                  "${aws_dynamodb_table.snslambda_table.stream_arn}"]
   },
   {
      "Effect": "Allow",
       "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
+        "s3:*"
       ],
       "Resource": ["${aws_s3_bucket.bucket.arn}",
 		              "${aws_s3_bucket.bucket.arn}/*",
@@ -905,12 +886,12 @@ resource "aws_iam_role_policy_attachment" "lambda_role_attach2" {
 #--------------------- Create Lambda Function ---------------------
 
 resource "aws_lambda_function" "func_lambda" {
-  filename      = "csye6225_lambda0.0.1-SNAPSHOT"
+  filename      = "csye6225_lambda.zip"
   function_name = "func_lambda"
   role          = "${aws_iam_role.iam_for_lambda.arn}"
   handler       = "LogEvent"
   runtime	    = "java8"
-  s3_bucket 	= "${aws_s3_bucket.lambda_bucket.bucket_domain_name}"
+  //s3_bucket 	= "${aws_s3_bucket.lambda_bucket.bucket_domain_name}"
   timeout        = 900
   reserved_concurrent_executions = 1
   depends_on     = ["aws_sns_topic.email_request"]
@@ -932,7 +913,7 @@ resource "aws_lambda_permission" "sns" {
   action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.func_lambda.arn}"
   principal     = "sns.amazonaws.com"
-  source_arn = "${aws_sns_topic.email_request.arn}"
+  source_arn    = "${aws_sns_topic.email_request.arn}"
 }
 
 #---------------- Subscribe Lambda function to SNS topic ---------------
@@ -945,12 +926,6 @@ resource "aws_sns_topic_subscription" "sns_subscription" {
 }
 
 #---------------------- Lambda source Mapping ------------------------
-
-// resource "aws_lambda_event_souasic-dynamodb-tableg" "lambda_dynamo_mapping" {
-//   event_source_arn  = "${aws_dynamodb_table.snslambda_table.stream_arn}"
-//   function_name     = "${aws_lambda_function.func_lambda.arn}"
-//   starting_position = "LATEST"
-// }
 
 resource "aws_lambda_event_source_mapping" "lambda_dynamo_mapping" {
   event_source_arn  = "${aws_dynamodb_table.snslambda_table.stream_arn}"
