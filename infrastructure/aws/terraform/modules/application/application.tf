@@ -279,12 +279,14 @@ resource "aws_security_group" "application" {
 		from_port = 22
 		to_port = 22
 		protocol = "tcp"
+    security_groups = ["${aws_security_group.albSecurityGrp.id}"]
 	}
 	ingress {
 		cidr_blocks = ["0.0.0.0/0"]
 		from_port = 8080
 		to_port = 8080
 		protocol = "tcp"
+    security_groups = ["${aws_security_group.albSecurityGrp.id}"]
 	}
 	egress {
 		cidr_blocks = ["0.0.0.0/0"]
@@ -327,6 +329,28 @@ resource "aws_security_group_rule" "egress-database-rule" {
     security_group_id = "${aws_security_group.database.id}"
     source_security_group_id  = "${aws_security_group.application.id}"
 }
+
+#===================== Load balancer Security Group===============
+resource "aws_security_group" "albSecurityGrp" {
+	name = "Alb security group"
+	description = "Allow traffic for Webapp"
+	vpc_id = "${var.vpcop_id}"
+	ingress {
+		cidr_blocks = ["0.0.0.0/0"]
+		from_port = 443
+		to_port = 443
+		protocol = "tcp"
+    //security_groups = ["${aws_security_group.albSecurityGrp.id}"]
+	}
+
+	egress {
+		cidr_blocks = ["0.0.0.0/0"]
+	    from_port = 0
+	   	to_port = 0
+	    protocol = "-1"
+	}
+}
+
 
 #========================= RDS instances ============================
 
@@ -520,7 +544,7 @@ resource "aws_lb_listener" "lb_listener1" {
   load_balancer_arn = "${aws_lb.alb.arn}"
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  //ssl_policy        = "ELBSecurityPolicy-2016-08"
   certificate_arn   = "${var.certiArn}"
   default_action {
     type             = "forward"
@@ -538,8 +562,8 @@ resource "aws_lb_target_group" "lb_tg" {
       name    = "tf-lb-tg"
   }
   health_check {
-      healthy_threshold = 2
-      unhealthy_threshold = 2
+      healthy_threshold = 3
+      unhealthy_threshold = 3
       timeout = 5
       interval = 60
       path = "/apphealthstatus"
@@ -551,18 +575,18 @@ resource "aws_lb_target_group" "lb_tg" {
 }
 
 
-resource "aws_alb_listener_rule" "listener_rule" {
-  listener_arn = "${aws_lb_listener.lb_listener1.arn}"  
-  priority     = 100   
-  action {    
-    type             = "forward"    
-    target_group_arn = "${aws_lb_target_group.lb_tg.arn}"  
-  }   
-  condition {    
-    field  = "path-pattern"    
-    values = ["/api*"]  
-  }
-}
+// resource "aws_alb_listener_rule" "listener_rule" {
+//   listener_arn = "${aws_lb_listener.lb_listener1.arn}"  
+//   priority     = 100   
+//   action {    
+//     type             = "forward"    
+//     target_group_arn = "${aws_lb_target_group.lb_tg.arn}"  
+//   }   
+//   condition {    
+//     field  = "path-pattern"    
+//     values = ["/api*"]  
+//   }
+// }
 
 // resource "aws_lb_target_group" "lb_tg" {
 //   name     = "lb-tg"
@@ -580,10 +604,10 @@ resource "aws_alb_listener_rule" "listener_rule" {
 // }
 
 #Autoscaling Attachment
-resource "aws_autoscaling_attachment" "asg_targetgroup" {
-  alb_target_group_arn   = "${aws_lb_target_group.lb_tg.arn}"
-  autoscaling_group_name = "${aws_autoscaling_group.ec2_asg.id}"
-}
+// resource "aws_autoscaling_attachment" "asg_targetgroup" {
+//   alb_target_group_arn   = "${aws_lb_target_group.lb_tg.arn}"
+//   autoscaling_group_name = "${aws_autoscaling_group.ec2_asg.id}"
+// }
 /*resource "aws_lb_target_group_attachment" "test" {
   target_group_arn = "${aws_lb_target_group.lb_tg.arn}"
   target_id        = "${aws_lambda_function.func_lambda.arn}"
@@ -619,7 +643,9 @@ resource "aws_launch_configuration" "ec2_lc" {
     create_before_destroy = true
   }
   depends_on = [
-    "aws_security_group.application"
+    "aws_security_group.application",
+    "aws_db_instance.RDS",
+    "aws_s3_bucket.bucket"
   ]
 }
 
@@ -629,8 +655,10 @@ resource "aws_autoscaling_group" "ec2_asg" {
   launch_configuration = "${aws_launch_configuration.ec2_lc.name}"
   min_size             = 3
   max_size             = 10
-  health_check_type    = "ELB"
+  desired_capacity     = 3
+  //health_check_type    = "ELB"
   vpc_zone_identifier  = var.subnets
+  target_group_arns     = ["${aws_lb_target_group.lb_tg.arn}"]
   lifecycle {
     create_before_destroy = true
   }
@@ -639,12 +667,12 @@ resource "aws_autoscaling_group" "ec2_asg" {
     value               = "dev"
     propagate_at_launch = true
   }
-  depends_on = [
-    "aws_db_instance.RDS",
-    "aws_launch_configuration.ec2_lc",
-    "var.subnets",
-    "aws_lb_target_group.lb_tg"
-  ]
+  // depends_on = [
+  //   "aws_db_instance.RDS",
+  //   "aws_launch_configuration.ec2_lc",
+  //   "var.subnets",
+  //   "aws_lb_target_group.lb_tg"
+  // ]
 }
 
 
